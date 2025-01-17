@@ -1,0 +1,37 @@
+*bak
+.vscode/
+*.log
+.coverage
+
+# Envs
+venv*/
+
+# Caches
+__pycache__/
+.*_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+docs/biodm/
+
+# Internal
+*.cnag*
+
+# Server
+server/scripts/cxg_on_k8
+
+# Client
+client/src/client
+
+# Dependency directories
+client/node_modules/
+
+# Sveltekit outdir
+client/.svelte-kit
+
+# Optional eslint cache
+.eslintcache
+
+
