@@ -1,7 +1,7 @@
 # OmicsDM_v2
 Holds sources for the version 2 of Omics Data Management platform
 
-## Run Server
+## Run Server
 
 ### Environment
 
@@ -13,13 +13,13 @@ pip3 install "biodm[kubernetes] @ git+https://github.com/bag-cnag/biodm"
 pip3 install -r requirements.txt
 ```
 
-### Dependencies
+### Dependencies
 
 ```sh
 docker compose up -d
 ```
 
-### Run
+### Run
 
 After those pre-requisite steps you may either use the provided `VSCode` run and debug entry or
 run manually
@@ -28,7 +28,7 @@ run manually
 python3 app.py 
 ```
 
-## Run Client
+## Run Client
 
 This step assumes you are using `nvm`
 
