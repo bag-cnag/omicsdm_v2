@@ -2,37 +2,48 @@
     import {
         getDatasetsByIdByVersion, getDatasets, postFiles,
         putFilesByIdByVersionComplete, getProjectsById,
-        postFilesByIdByVersionRelease, deleteFilesByIdByVersion
+        postFilesByIdByVersionRelease, deleteFilesByIdByVersion,
+        FileSchema, getFiles
     } from "client";
-    import type { PartsEtag, File as srvFile, Dataset, Project } from "client"
+    import type { PartsEtag, File as SrvFile, Dataset, Project } from "client"
 
-    import { onMount } from 'svelte';
-    import { page } from "$app/stores";
+    import { mount, onMount, unmount} from 'svelte';
+    import { page } from "$app/state";
 
-    import { Tabs, TabItem, Spinner } from 'flowbite-svelte';
-    import { TableHandler, Datatable, Th, ThFilter, RowCount, RowsPerPage, Pagination, type State } from '@vincjo/datatables/server'
+    import { Tabs, TabItem } from 'flowbite-svelte';
+    import { 
+        TableHandler, Datatable, Th, ThFilter,
+        RowCount, RowsPerPage, Pagination, type State
+    } from '@vincjo/datatables/server'
+    import ThEnumFilter from "$lib/table/ThEnumFilter.svelte";
+
 
     import { checkGroups } from "auth";
     import Modal from "$lib/ui/Modal.svelte";
-    import { SvgDownload, SvgUpload } from "$lib/icons";
+    import { SvgDownload, SvgUpload, SvgTrashBin, SvgEye } from "$lib/icons";
     import { DatasetForm, FileForm } from "$lib/form";
     import { clearFormErrors, displayFormError } from '$lib/form/messages'
+    import { isEmpty } from "$lib/types/array";
 
     import { reload } from "./table";
     import Overview from "./Overview.svelte";
-    import { uploadChunk, downloadFile, datasetRelease, datasetShare, visualizeFile } from "./submit"
-    import SvgTrashBin from "$lib/icons/SvgTrashBin.svelte";
-    import SvgEye from "$lib/icons/SvgEye.svelte";
+    import {
+        uploadChunk, downloadFile, datasetRelease,
+        datasetShare, visualizeFile, extractAndValidateFile
+    } from "./submit"
+    import UploadCard from "$lib/ui/UploadCard.svelte";
 
     // Local context
-    const { id, version } = $page.params;
+    const { id, version } = page.params;
     let showFUPModal = $state(false);
     let showFREUPModal = $state(false);
-    let fileToREUP = $state<srvFile>()
+    let fileToREUP = $state<SrvFile>()
 
     let page_dataset = $state.raw<Dataset>();
     let page_project = $state.raw<Project>();
     let update_datset = $state.raw<Dataset>();
+    let licence = $state<Partial<SrvFile>>();
+    let last_upload = $state<Partial<SrvFile>>();
 
     let prev_version = $state.raw<Dataset>()
     let next_version = $state.raw<Dataset>()
@@ -70,11 +81,42 @@
 
             let pr_response = await getProjectsById({
                 path: {
-                    id: page_dataset.project_id.toString()
+                    id: page_dataset.project_id
                 }
             });
             if(pr_response.response.ok){
                 page_project = pr_response.data;
+            }
+
+            let li_res = await getFiles({
+                // TODO: probably buggy as this fetches last file regardless of it being a licence or not.
+                query: {
+                    dataset_id: +page_dataset.id!,
+                    dataset_version: +page_dataset.version!,
+                    fields: 'id,version',
+                    type: 'licence',
+                    q: 'validated_at.max_a()'
+                }
+            })
+            if (li_res.response.ok){
+                if(!isEmpty(li_res.data!)){
+                    licence = (li_res.data![0] as SrvFile)
+                }
+            }
+
+            let lu_res = await getFiles({
+                query: {
+                    dataset_id: +page_dataset.id!,
+                    dataset_version: +page_dataset.version!,
+                    fields: 'validated_at',
+                    type: 'molecular,clinical',
+                    q: 'validated_at.max_a()'
+                }
+            })
+            if (lu_res.response.ok){
+                if(!isEmpty(lu_res.data!)){
+                    last_upload = (lu_res.data![0] as Partial<SrvFile>)
+                }
             }
         }
 
@@ -104,94 +146,120 @@
     const chunkSize = 100*1024 * 1024; // size of each chunk (100MB)
 
     // Initialize table
-    const table = new TableHandler<srvFile>([], { rowsPerPage: 10 })
+    const table = new TableHandler<SrvFile>([], { rowsPerPage: 5 })
     table.load((state: State) => reload(state, id, version))
     table.invalidate()
+    let action_bar = $state<Element>();
 
     // This method stays here because it touches local context stuff (table, showFUPModal)
-    async function uploadFormSubmit(ev: SubmitEvent, reup?: srvFile){
+    async function uploadFormSubmit(ev: SubmitEvent, reup?: SrvFile){
         clearFormErrors();
-
-        const form = (ev.target! as HTMLFormElement).elements;
-        const file: File = form['file'].files[0];
-        let [ name, ext ] = form['filename'].value.split('.');
+        const form = (ev.target! as HTMLFormElement);
+        const formdata = new FormData(form);
 
         try {
-            let response
-            const body = {
-                filename: name,
-                extension: ext,
-                type: form['filetype'].value,
-                size: file.size,
-                comment: form['comment'].value,
-                dataset_id: +id,
-                dataset_version: +version,
-            }
+            const file = (formdata.get('file') as File);
+            const body = extractAndValidateFile(formdata, id, version);
+            let response;
 
             if (!reup){
                 response = await postFiles({body: body})
             } else {
                 response = await postFilesByIdByVersionRelease({
                     path: {
-                        id: reup.id!.toString(),
-                        version: reup.version!.toString()
+                        id: reup.id!,
+                        version: reup.version!
                     },
                     body: body
                 })
             }
 
+            // https://github.com/sveltejs/svelte/discussions/15105
+
             if (response.response.ok){
-                document.getElementById("loading_spinner")!.style.display = "block"
-
-                let head = 0
-                let parts_etags: Array<PartsEtag> = []
-
-                for (const part of response.data!.upload!.parts!){
-                    const etag = await uploadChunk(file.slice(head, head + chunkSize), part.form!)
-                    parts_etags.push({'PartNumber': part.part_number, 'ETag': etag})
-                    head += chunkSize
-                }
-
-                let completion = await putFilesByIdByVersionComplete({
-                    path: {
-                        id: response.data!.id!.toString(),
-                        version: response.data!.version!.toString()
+                // Status card.
+                let up_card = mount(UploadCard, {
+                    target: action_bar!,
+                    props: {
+                        id: "upload" + response.data!.id,
+                        class: "action-card w-fit",
+                        reup: reup ? true : false,
+                        filename: response.data!.filename + "." + response.data!.extension,
+                        progress: "0"
                     },
-                    body: parts_etags
                 })
-                if(completion.response.ok){
-                    // Reset form
-                    (ev.target! as HTMLFormElement).reset()
-                    showFUPModal = false
-                    // Manually close modal, as sveltekit is not doing it for us. 
-                    Array.from(document.getElementsByClassName('modal')).forEach(e => {
-                        (e as HTMLDialogElement).close()
-                    });
-                    // Reset modal
-                    document.getElementById("loading_spinner")!.style.display = "none"
-                    // Refresh table data
-                    table.invalidate()
-                } else {
-                    throw new Error(completion.response.statusText)
+
+                // Reset form
+                form.reset();
+                // Manually close modal, as sveltekit is not reliably doing it for us. 
+                showFUPModal = false;
+                showFREUPModal = false;
+                Array.from(document.getElementsByClassName('modal')).forEach(e => {
+                    (e as HTMLDialogElement).close();
+                });
+
+                // Upload file
+                let head = 0;
+                let parts_etags: Array<PartsEtag> = [];
+
+                //Progress
+                let i = 0;
+                let n = response.data!.upload!.parts!.length;
+
+                try {
+                    for (const part of response.data!.upload!.parts!){
+                        const etag = await uploadChunk(
+                            file.slice(head, head + chunkSize),
+                            part.form!
+                        );
+                        parts_etags.push({'PartNumber': part.part_number, 'ETag': etag});
+                        head += chunkSize;
+                        i++;
+                        up_card.progress = ((i/n)*100).toString();
+                    }
+
+                    let completion = await putFilesByIdByVersionComplete({
+                        path: {
+                            id: response.data!.id!,
+                            version: response.data!.version!
+                        },
+                        body: parts_etags
+                    })
+
+                    if(completion.response.ok){
+                        // Fade out card
+                        setInterval(() => {
+                            unmount(up_card, { outro: true })
+                        }, 5000)
+                        // Refresh table
+                        table.invalidate();
+                    } else {
+                        let e = new Error(completion.error!.message);
+                        up_card.error = e.message;                    
+                        console.error(e);
+                    }
+                } catch(e){
+                    console.error(e);
+                    up_card.error = (e as Error).message;
                 }
             } else {
-                if(response.error.message.includes('already been released')){
-                    displayFormError("Re-Uploading a File is only allowed on latest version.", ev.target!.id);
+                if(response.error!.message.includes('already been released')){
+                    displayFormError("Re-Uploading a File is only allowed on latest version.", form.id);
                 } else {
-                    displayFormError("One file with this name and version already exists.", ev.target!.id);
+                    displayFormError("One file with this name and version already exists.", form.id);
                 }
             }
         } catch(e) {
             console.error(e)
-            displayFormError("Server error: "+ (e as Error).toString(), ev.target!.id)
+            displayFormError((e as Error).toString(), form.id);
         }
     }
 
-    async function deleteFile(row: srvFile){
+    async function deleteFile(row: SrvFile){
         let response = await deleteFilesByIdByVersion({
             path: {
-                id: row.id!.toString(),
-                version: row.version!.toString()
+                id: row.id!,
+                version: row.version!
             }
         })
 
@@ -199,42 +267,24 @@
             // Refresh table data
             table.invalidate()
         } else {
-            let e = new Error(response.response.statusText)
-            console.error(e)
+            console.error(response.error!.message)
         }
     }
 </script>
 
-<style>
-    td a.fileaction {
-        cursor: pointer;
-        margin: 5px;
-    }
-    #loading_spinner {
-        display: none;
-    }
-    #overlay-spinner-modal {
-        position:fixed;
-        background-color: grey;
-        top:0;
-        left:0;
-        opacity: 60%;
-        z-index:1050;
-        display:none;
-        width:100%;
-        height:100%;
-        overflow:hidden;
-        outline:0;
-        @apply justify-center items-center;
-    }
-</style>
 
-{#if page_project} <!-- onMount succeded -->
-<div id="overlay-spinner-modal"><Spinner size={32}/></div>
-
+{#if page_project && page_dataset} <!-- onMount succeded -->
+<!-- <div id="overlay-spinner-modal"><Spinner size={32}/></div> -->
 <Tabs class="relative">
     <TabItem open title="Overview">
-        <Overview dataset={page_dataset}/>
+        <Overview 
+            dataset={page_dataset!}
+            project={page_project}
+            licence={licence}
+            last_upload={last_upload}
+            prev={prev_version}
+            next={next_version}
+        />
     </TabItem>
     <TabItem title="Files">
         <div class="text-sm text-gray-500 dark:text-gray-400">
@@ -254,12 +304,20 @@
                             <Th>Type</Th>
                             <Th>Actions</Th>
                         </tr>
-                        <!-- <tr>
-                        <ThFilter {table} field="short_name"/>
-                        <ThFilter {table} field="long_name"/>
-                        <ThFilter {table} field="description"/>
-                        <ThFilter {table} field="samples_count"/>
-                        </tr> -->
+                        <tr>
+                        <th></th>
+                        <ThFilter {table} field="version"/>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <ThEnumFilter {table} field="type"
+                            options={
+                                Array.from(FileSchema.properties.type.enum).filter(
+                                    item => item != 'licence'
+                                )
+                            }
+                        />
+                        </tr>
                     </thead>
                     <tbody>
                         {#each table.rows as row}
@@ -272,26 +330,34 @@
                             <td>{row.type}</td>
                             <td class="hiflex">
                                 {#if checkGroups(page_project!.perm_datasets!.download)}
-                                    <a title="Download" href={'#'} class="fileaction fdl" onclick={() => {downloadFile(row)}}>
+                                    <button type="button" title="Download" class="faction"
+                                        onclick={() => {downloadFile(row)}}
+                                    >
                                         <SvgDownload />
-                                    </a>
+                                    </button>
                                 {/if}
                                 {#if row.extension == 'h5ad'}
-                                    <a title="Visualize" href={'#'} class="fileaction fvis" onclick={() => {visualizeFile(row)}}>
+                                    <button type="button" title="Visualize" class="faction"
+                                        onclick={() => {visualizeFile(row)}}
+                                    >
                                         <SvgEye />
-                                    </a>
+                                    </button>
                                 {/if}
                                 {#if checkGroups(page_dataset!.perm_files!.write)}
-                                    <a title="Re-Upload" href={'#'} class="fileaction fup" onclick={() => {
+                                    <button type="button" title="Re-Upload" class="faction"
+                                        onclick={() => {
                                             fileToREUP = row;
                                             showFREUPModal = true;
                                         }}
                                     >
                                         <SvgUpload />
-                                    </a>
-                                    <a title="Delete" href={'#'} class="fileaction fdel" onclick={() => {deleteFile(row)}}>
+                                    </button>
+
+                                    <button type="button" title="Delete" class="faction"
+                                        onclick={() => {deleteFile(row)}}
+                                    >
                                         <SvgTrashBin />
-                                    </a>
+                                    </button>
                                 {/if}
                             </td>
                         </tr>
@@ -304,6 +370,7 @@
                 {/snippet}
             </Datatable>
         </div>
+        <div id="action-bar" bind:this={action_bar} class="border-2 mt-5 min-h-4 inline-flex"></div>
     </TabItem>
     <div class="flex absolute right-0">
         {#if checkGroups(page_project!.perm_datasets!.write)}
@@ -356,19 +423,15 @@
         <div id="modal_content">
             <FileForm id="file_upload_form" onsubmit={(e: SubmitEvent) => uploadFormSubmit(e)}/>
         </div>
-        <div id="loading_spinner" class='text-center top-1/2 absolute inset-0 flex justify-center items-center z-10'>
-            <Spinner size={32}/>
-        </div>
     </Modal>
     <Modal bind:showModal={showFREUPModal}>
         {#snippet header()}
-            <h2>Re-Upload A File</h2>
+            <h2>Upload A new Version for this File</h2>
         {/snippet}
         <div id="modal_content">
-            <FileForm id="file_reupload_form" bind:reupFile={fileToREUP} onsubmit={(e: SubmitEvent) => uploadFormSubmit(e, fileToREUP)}/>
-        </div>
-        <div id="loading_spinner" class='text-center top-1/2 absolute inset-0 flex justify-center items-center z-10'>
-            <Spinner size={32}/>
+            <FileForm id="file_reupload_form" bind:reupFile={fileToREUP}
+                onsubmit={(e: SubmitEvent) => uploadFormSubmit(e, fileToREUP)}
+            />
         </div>
     </Modal>
 </Tabs>

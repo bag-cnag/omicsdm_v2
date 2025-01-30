@@ -3,6 +3,16 @@ import type {
 } from "client";
 
 
+function containsParent(ls: string[], element: string): boolean {
+    for(const v of ls){
+        if(element != v && element.includes(v)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 export function extractDatasetPermissions(
     data: Partial<Dataset>,
     read_selected: Array<string>,
@@ -12,14 +22,14 @@ export function extractDatasetPermissions(
     let perm_self: AssoPermDatasetSelf = {}
     if (read_selected && read_selected.length){
         perm_self.read = {groups: []}
-        for(const path of read_selected)
+        for(const path of read_selected.filter(item => !containsParent(read_selected, item)))
             perm_self.read.groups!.push({"path": path})
     } else
         perm_self.read = {}
 
     if (download_selected && download_selected.length){
         perm_self.download = {groups: []}
-        for(const path of download_selected)
+        for(const path of download_selected.filter(item => !containsParent(download_selected, item)))
             perm_self.download.groups!.push({"path": path})
     } else
         perm_self.download = {}
@@ -27,7 +37,7 @@ export function extractDatasetPermissions(
     let perm_files: AssoPermDatasetFiles = {}
     if (write_selected && write_selected.length){
         perm_files.write = {groups: []}
-        for(const path of write_selected)
+        for(const path of write_selected.filter(item => !containsParent(write_selected, item)))
             perm_files.write.groups!.push({"path": path})
     } else
         perm_files.write = {}
@@ -46,14 +56,14 @@ export function extractProjectPermissions(
     let perm_datasets: AssoPermProjectDatasets = {}
     if (write_selected && write_selected.length){
         perm_datasets.write = {groups: []}
-        for(const path of write_selected)
+        for(const path of write_selected.filter(item => !containsParent(write_selected, item)))
             perm_datasets.write.groups!.push({"path": path})
     } else
         perm_datasets.write = {}
     
     if (download_selected && download_selected.length){
         perm_datasets.download = {groups: []}
-        for(const path of download_selected)
+        for(const path of download_selected.filter(item => !containsParent(download_selected, item)))
             perm_datasets.download.groups!.push({"path": path})
     } else
         perm_datasets.download = {}

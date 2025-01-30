@@ -1,27 +1,29 @@
 import { getGroups } from "client";
-import { type SelectOptionType } from 'flowbite-svelte';
+import { get, writable } from "svelte/store";
+import { isEmpty } from "$lib/types/array";
 
 
-export async function groupsForMultiselect(
-    ): Promise<SelectOptionType<string>[]> {
+const _all_groups = writable<string[]>([]);
+
+
+export async function groupsForMultiselect(): Promise<string[]> {
+    let stored = get(_all_groups)
+    if(!isEmpty(stored)){
+        return stored
+    }
+
     const res = await getGroups()
-    const ret = []
+    let ret: string[] = []
     if (res.response.ok){
         for(const group of res.data!)
             if(group.path != "admin")
-                ret.push({'value': group.path, 'name': group.path})
+                ret.push(group.path!)
 
-        return (ret.sort(( a, b ) => {
-            if (b['name']!.includes(a['name']!))
-                return -1;
-            if (a['name']! > b['name']!)
-                return -1;
-            if (b['name']! < a['name']!)
-                return 1;
-            return 0;
-        }) as SelectOptionType<string>[]);
-    } else
+        ret.sort();
+
+        _all_groups.set(ret);
+        return ret;
+    } else {
         throw new Error(res.response.statusText)
+    }
 }
-
-export const GroupsForMultiselect = await groupsForMultiselect();

@@ -1,10 +1,11 @@
 <script lang="ts">
     import { DatasetSchema, type Dataset } from "client";
-    import { MultiSelect, type SelectOptionType, Textarea } from 'flowbite-svelte';
+    import { Textarea } from 'flowbite-svelte';
     import { onMount } from "svelte";
     import { groupsForMultiselect } from "$lib/remote/groups";
-    import { getKeyValue } from '$lib/types/obj'; 
     import { Form, AutoInput, InputContainer } from "./components"
+    import { datasetGet } from "$lib/types/client/Dataset";
+    import GroupMultiSelect from "./components/GroupMultiSelect.svelte";
 
     // inputs "props"
     let {
@@ -28,16 +29,7 @@
     } = $props();
 
     // Access perm
-    let all_groups: Array<SelectOptionType<string>> = $state([])
-
-    const datasetGet = (key: string) => {
-        // Typescript compliant get
-        if (dataset) {
-            return getKeyValue<keyof Dataset, Dataset | Partial<Dataset>>(
-                key as keyof Dataset)(dataset);
-        }
-        return null;
-    }
+    let all_groups: string[] = $state([])
 
     onMount(async () => {
         // fetch groups
@@ -80,20 +72,20 @@
             "contact_username"
         ] as auto_field
         }
-            <AutoInput schema={DatasetSchema} field={auto_field} value={datasetGet(auto_field)}/>
+            <AutoInput schema={DatasetSchema} field={auto_field} value={datasetGet(dataset, auto_field)}/>
         {/each}
     {/if}
 
     <InputContainer field="read_groups" required={false}>
-        <MultiSelect id="read_groups" class="w-3/4" items={all_groups} bind:value={read_selected} size="lg" />
+        <GroupMultiSelect id="read_groups" size="lg" options={all_groups} bind:selected={read_selected} />
     </InputContainer>
 
     <InputContainer field="write_groups" required={false}>
-        <MultiSelect id="write_groups" class="w-3/4" items={all_groups} bind:value={write_selected} size="lg" />
+        <GroupMultiSelect id="write_groups" size="lg" options={all_groups} bind:selected={write_selected} />
     </InputContainer>
 
     <InputContainer field="download_groups" required={false}>
-        <MultiSelect id="download_groups" class="w-3/4" items={all_groups} bind:value={download_selected} size="lg" />
+        <GroupMultiSelect id="download_groups" size="lg" options={all_groups} bind:selected={download_selected} />
     </InputContainer>
 </Form>
 

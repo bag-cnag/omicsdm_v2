@@ -17,9 +17,15 @@
 <h1>How to Use</h1>
 
 <h2>Table filters</h2>
+<p>
+    Filters are expecting an input of comma separated values E.g 'v1,v2,v3' resulting in a logical OR search.
+</p>
+
 <h3>Text Fields</h3>
-Text fields are by default enclosed in wildcards, meaning input pattern will be matched regardless
-of its position in the text.
+<p>
+    Text values are by default enclosed in wildcards, meaning input pattern(s) will be matched
+    regardless of position in the text.
+</p>
 
 <h3>Numerical Fields</h3>
 Numerical filter fields support the following operators:
@@ -27,14 +33,13 @@ Numerical filter fields support the following operators:
 <ul>
     <li>greater than '&gt;', greater equal '&gt;='</li>
     <li>lesser than '&lt;', lesser equal '&lt;='</li>
-    <li>'min', 'max'</li>
+    <li>'min', 'max': Absolute min and max</li>
+    <li>'min_v', 'max_v': For each version chain</li>
+    <li>'min_a', 'max_a': Aggregate min and max with respect to other filters</li>
 </ul>
 
-<h3>Version</h3>
-On top of other numerical field operators, 'version' columns are supporting
+<h3>Date fields</h3>
+While in theory date fields are supporting the same operators as numerical fields,
+they currently return somewhat inconsistent result.
 
-<ul>
-    <li>'min_v', 'max_v'</li>
-</ul>
-
-Same as min and max but applied for each chain of resources instead of the whole table.
+This may be fixed in a future release.

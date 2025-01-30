@@ -5,23 +5,23 @@
 	import { lastpage } from '../auth';
 	import { beforeNavigate } from '$app/navigation';
     import { isAuthenticated, user } from "auth";
-	import { page } from '$app/stores'
+	import { page } from '$app/state'
     import Login from '../lib/Login.svelte'
 
 	beforeNavigate((nav) => {
-		let page = ""
+		let url = ""
 		if(!nav.from || !nav.from.url){
-			page = "/"
+			url = "/"
 		} else {
-			page = nav.from!.url.toString()
+			url = nav.from!.url.toString()
 		}
-		lastpage.set(page);
+		lastpage.set(url);
 	});
 
 	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Avatar, DropdownHeader, DropdownDivider, DropdownItem, Dropdown } from 'flowbite-svelte';
 
 	let activeUrl = $state<string>();
-	$effect(() => { activeUrl = $page.url.pathname; })
+	$effect(() => { activeUrl = page.url.pathname; })
 </script>
 
 <!-- <style>

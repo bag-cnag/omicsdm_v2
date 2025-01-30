@@ -1,11 +1,10 @@
 <script lang="ts">
     import { ProjectSchema, type Project } from "client";
-    // import { MultiSelect, type SelectOptionType, Textarea } from 'flowbite-svelte';
     import { onMount } from "svelte";
     import { groupsForMultiselect } from "$lib/remote/groups";
-    import { isEmpty, getKeyValue } from '$lib/types/obj'; 
     import { Form, AutoInput, InputContainer } from "./components"
-    import { MultiSelect, Textarea, type SelectOptionType } from "flowbite-svelte";
+    import { Textarea } from "flowbite-svelte";
+    import GroupMultiSelect from "./components/GroupMultiSelect.svelte";
 
     let {
         btnText = "Create",
@@ -25,7 +24,7 @@
         onsubmit: Function
     } = $props();
 
-    let all_groups: Array<SelectOptionType<string>> = $state([])
+    let all_groups: string[] = $state([])
 
     onMount(async ()=>{
         all_groups = await groupsForMultiselect()
@@ -43,10 +42,10 @@
     {/if}
 
     <InputContainer field="write_groups" required={false}>
-        <MultiSelect id="write_groups" class="w-3/4" items={all_groups} bind:value={write_selected} size="lg" />
+        <GroupMultiSelect id="write_groups" size="lg" options={all_groups} bind:selected={write_selected} />
     </InputContainer>
     <InputContainer field="download_groups" required={false}>
-        <MultiSelect id="download_groups" class="w-3/4" items={all_groups} bind:value={download_selected} size="lg" />
+        <GroupMultiSelect id="download_groups" size="lg" options={all_groups} bind:selected={download_selected} />
     </InputContainer>
 </Form>
 

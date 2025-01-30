@@ -2,7 +2,7 @@
     import { getSynAck, getAuthenticated } from "client";
     import { onMount } from 'svelte';
     import { isAuthenticated, token, user, groups, lastpage, setexpires } from "auth";
-    import { page } from '$app/stores';
+    import { page } from '$app/state';
     import { goto } from '$app/navigation';
 
     async function login(code: string){
@@ -33,9 +33,9 @@
     }
 
     onMount(async () => {
-        if (!$page.url.searchParams.has('code')){
+        if (!page.url.searchParams.has('code')){
             goto($lastpage)
         }
-        await login($page.url.searchParams.get('code')!)
+        await login(page.url.searchParams.get('code')!)
     });
 </script>

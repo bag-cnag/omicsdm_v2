@@ -1,5 +1,11 @@
 <script>
-    import { getLogin } from '../client/services.gen';
+    import { onMount } from 'svelte';
+    import { loginUrl } from './remote/login';
+
+    let url = $state();
+    onMount(async ()=>{
+        url = await loginUrl(); 
+    })
 </script>
 
 <style>
@@ -12,20 +18,10 @@
   }
 </style>
 
-<div>
-  {#await getLogin({
-    query: {
-      // redirect_uri: "http://localhost:5173/"
-      redirect_uri: window.location.origin + "/login"
-    }
-  })}
-    <p>loading</p>
-  {:then login}
-
-  <a href="{login.data}" id="login" class="link-btn">
-    Login &nbsp;
-  </a>
-  {:catch error}
-    <p style="color: red">{error.message}</p>
-  {/await}
-</div>
+{#if url}
+    <div>
+        <a href="{url}" id="login" class="link-btn">
+            Login &nbsp;
+        </a>
+    </div>
+{/if}

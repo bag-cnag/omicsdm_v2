@@ -8,13 +8,40 @@ import {
     postFilesByIdByVersionVisualize
 } from "client";
 import type { Dataset, File as SrvFile} from "client";
+import { ajv, val } from '$lib/validate'
+import { mount } from "svelte";
+import VisualizationCard from "$lib/ui/VisualizationCard.svelte";
 
 
-export async function downloadFile(file: SrvFile){
+export function extractAndValidateFile(
+    formdata: FormData, id: string, version: string
+): SrvFile {
+    const file = (formdata.get('file') as File);
+    let [ name, ext ] = (formdata.get('filename')! as string).split('.');
+    const body = {
+        filename: name,
+        extension: ext,
+        type: (formdata.get('filetype')! as string),
+        size: file.size,
+        comment: (formdata.get('comment')! as string),
+        dataset_id: +id,
+        dataset_version: +version,
+    }
+
+    // Validate
+    let validate = val("File", body)
+    if(!validate){
+        throw new Error(ajv.errorsText().toString())
+    }
+    return (body as SrvFile);
+}
+
+
+export async function downloadFile(file: SrvFile | Partial<SrvFile>){
     let response = await getFilesByIdByVersionDownload({
         path: {
-            id: file.id!.toString(),
-            version: file.version!.toString()
+            id: file.id!,
+            version: file.version!
         }
     })
     if (response.response.ok){
@@ -29,17 +56,27 @@ export async function downloadFile(file: SrvFile){
     }
 }
 
+
 export async function uploadChunk(chunk: Blob, url: string){
     let response = await fetch(url, {
         method: 'PUT',
         body: chunk,
         headers: {'Content-Encoding': 'gzip'}
+    }).then( res => {
+        if(!res.ok){
+            return res.text().then(text => {
+                throw new Error(text)
+            })
+        } else {
+            return res;
+        }
     })
+
     if (response.ok){ // comes with trailing quotes
         return response.headers.get('ETag')!.replaceAll('"', '');
     }
-    throw new Error(response.statusText)
 }
+
 
 export async function datasetRelease(
     ev: SubmitEvent,
@@ -62,8 +99,8 @@ export async function datasetRelease(
     // TODO: only send the diff
     let response = await postDatasetsByIdByVersionRelease({
         path: {
-            id: dataset.id!.toString(),
-            version: dataset.version!.toString()
+            id: dataset.id!,
+            version: dataset.version!
         },
         body: (data as Dataset)
     })
@@ -107,22 +144,31 @@ export async function datasetShare(
 
 
 export async function visualizeFile(file: SrvFile){
-    let elm = document.getElementById('overlay-spinner-modal')
-    elm?.style.setProperty('display', 'flex');
+    // UI.
+    const action_bar = document.getElementById('action-bar');
+    let vis_card = mount(VisualizationCard, {
+        target: action_bar!,
+        props: {
+            id: "visualize-" + file.id,
+            class: "action-card w-fit",
+            filename: file.filename + "." + file.extension,
+            url: ""
+        },
+    })
 
     let response = await postFilesByIdByVersionVisualize({
         path: {
-            id: file.id!.toString(),
-            version: file.version!.toString()
+            id: file.id!,
+            version: file.version!
         }
     })
 
     if (response.response.ok){
         const url = response.data!
+        vis_card.url = url;
         setTimeout(()=>{window.open((url as string), '_blank')?.focus()}, 5000)
     } else {
-        throw new Error(response.response.statusText)
+        console.error(response.error?.message)
+        vis_card.error = response.error?.message;
     }
-
-    elm?.style.setProperty('display', 'none');
 }

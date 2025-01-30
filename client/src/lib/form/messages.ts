@@ -4,21 +4,6 @@ export function clearFormErrors(){
         errors[0].parentNode!.removeChild(errors[0]);
 }
 
-// export function displayFormError(err: string){
-//     const errorMessagesDiv = document.getElementById('errorMessages');
-//     const errorMessage = document.createElement('p');
-//     errorMessage.textContent = err;
-//     errorMessage.className = "error";
-//     errorMessagesDiv?.appendChild(errorMessage)
-
-//     setTimeout(function () {
-//         errorMessagesDiv?.scrollIntoView({
-//             behavior: "smooth",
-//             block: "start",
-//         });
-//    }, 50);
-// }
-
 
 export function displayFormError(err: string, parent?: string | null){
     let qs = ""
@@ -48,9 +33,6 @@ export function displayFormSuccess(msg: string, parent?: string | null){
         qs += "#"+parent
     }
     qs += " "
-
-    // const fillerDiv = document.getElementById('successMessagesFiller');
-    // const successMessagesDiv = document.getElementById('successMessages');
 
     const fillerDiv = document.querySelector(qs + " .successMessagesFiller");
     const successMessagesDiv = document.querySelector(qs + " .successMessages");

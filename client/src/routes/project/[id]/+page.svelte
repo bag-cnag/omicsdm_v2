@@ -1,11 +1,15 @@
 <script lang="ts">
-    import { getProjectsById, type Dataset, type Project} from "client";
+    import { DatasetSchema, getProjectsById, type Dataset, type Project} from "client";
 
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
     import { goto } from '$app/navigation';
 
     import { Tabs, TabItem } from 'flowbite-svelte';
-    import { TableHandler, Datatable, Th, ThFilter, RowCount, RowsPerPage, Pagination, type State } from '@vincjo/datatables/server'
+    import { 
+        TableHandler, Datatable, Th,
+        ThFilter, RowCount, RowsPerPage, Pagination, type State
+    } from '@vincjo/datatables/server'
+    import ThEnumFilter from "$lib/table/ThEnumFilter.svelte";
 
     import { checkGroups, isAuthenticated, groups } from "auth";
     import { DatasetForm, ProjectForm } from "$lib/form";
@@ -14,9 +18,11 @@
     import { reload } from "./table";
     import { datasetCreate, projectShare } from "./submit";
     import { onMount } from "svelte";
+    import { toTitle } from "$lib/types/str";
+    import { datasetGet } from "$lib/types/client/Dataset";
 
     // Local context
-    const { id } = $page.params;
+    const { id } = page.params;
     const table = new TableHandler<Dataset>([], { rowsPerPage: 10 })
     let page_project = $state.raw<Project>();
     let showModal = $state(false);
@@ -32,18 +38,10 @@
     table.load( (state: State) => reload(state, id));
     table.invalidate();
 
-    const view = table.createView([
-        { index: 0, name: 'Short Name' },
-        { index: 1, name: 'Version' },
-        { index: 2, name: 'Long Name' },
-        { index: 3, name: 'Description' },
-        { index: 4, name: 'Samples Count' },
-    ])
-
     onMount(async ()=>{
         let response = await getProjectsById({
             path: {
-                id: id
+                id: +id
             }
         })
         if (response.response.ok){
@@ -64,25 +62,55 @@
             goto('/');
         }
     })
+
+    const dataset_fields = [
+        "short_name",
+        "long_name",
+        "submission_date",
+        "disease",
+        "treatment",
+        "molecular_info",
+        "sample_type",
+        "data_type",
+        "value_type",
+        "platform",
+        "genome_assembly",
+        "annotation",
+        "samples_count",
+        "features_count",
+        "features_id",
+        "healthy_controls_included",
+        "additional_info",
+    ];
+
+    let view_input = [];
+    let i = 0;
+    for(const field of dataset_fields){
+        view_input.push({index: i, name: toTitle(field)})
+        i++;
+    }
+    const view = table.createView(view_input);
+
+    function horizontallyScrollable(element: HTMLElement){
+        element.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            element.scrollBy({
+                left: (event.deltaY + event.deltaX)/2,
+            });
+        });
+    }
 </script>
                 
-<style>
+<style lang="postcss">
     tr {
         cursor: pointer;
     }
 
-    .tail {
-        white-space: nowrap;
-        /* Make sure last word and icon will break ultimately */
-        display: inline-flex;
-        flex-wrap: wrap; 
-    }
-
-    button {
+    .col-btn {
         @apply inline-block text-sm font-medium text-center disabled:cursor-not-allowed p-4 rounded-t-lg ; 
     }
 
-    button.active {
+    .col-btn.active {
         @apply inline-block text-sm font-medium text-center disabled:cursor-not-allowed p-4 text-primary-600 bg-gray-100 rounded-t-lg dark:bg-gray-800 dark:text-primary-500; 
     }
 </style>
@@ -98,11 +126,13 @@
             <p>{page_project.description}</p>
 
             <hr class="w-full">
-
+            <div id="dt-container" class="overflow-x-hidden overflow-y-hidden"
+                 use:horizontallyScrollable
+            >
             <Datatable {table}>
                 {#snippet header()}
-                    <div>
-                        <button id="col-sel" class="link-btn" onclick={() => {showModal = true;}}>
+                    <div >
+                        <button id="col-sel" class="pri-btn" onclick={() => {showModal = true;}}>
                             <span class="tail">
                                 <SvgColumns cclass="text-white dark:text-gray-800"/>&nbsp;Columns
                             </span>                            
@@ -113,28 +143,34 @@
                 <table>
                     <thead>
                         <tr>
-                            <Th>Short Name</Th>
-                            <Th>Version</Th>
-                            <Th>Long Name</Th>
-                            <Th>Description</Th>
-                            <Th>Samples Count</Th>
+                            {#each dataset_fields as field}
+                                <Th>{toTitle(field)}</Th>
+                            {/each}
                         </tr>
                         <tr>
-                            <ThFilter {table} field="short_name"/>
-                            <ThFilter {table} field="version"/>
-                            <ThFilter {table} field="long_name"/>
-                            <ThFilter {table} field="description"/>
-                            <ThFilter {table} field="samples_count"/>
+                            {#each dataset_fields as field}
+                                {#if DatasetSchema.properties[field].type == 'boolean'}
+                                    <ThEnumFilter {table} field={field as keyof Dataset}
+                                                          options={[true, false]}/>
+                                {:else if DatasetSchema.properties[field].enum}
+                                    <ThEnumFilter {table} field={field as keyof Dataset} 
+                                                          options={DatasetSchema.properties[field].enum}/>
+                                {:else}
+                                    <ThFilter {table} field={field as keyof Dataset}/>
+                                {/if}
+                            {/each}
                         </tr>
                     </thead>
                     <tbody>
                         {#each table.rows as row}
                         <tr onclick={() => {goto('/dataset/'+row.id + '_' + row.version)}}>
-                            <td>{row.short_name}</td>
-                            <td>{row.version}</td>
-                            <td>{row.long_name}</td>
-                            <td>{row.description}</td>
-                            <td>{row.samples_count}</td>
+                            {#each dataset_fields as field}
+                                {#if DatasetSchema.properties[field].format == 'date'}
+                                    <td nowrap>{datasetGet(row, field)}</td>
+                                {:else}
+                                    <td>{datasetGet(row, field)}</td>
+                                {/if}
+                            {/each}
                         </tr>
                         {/each}
                     </tbody>
@@ -144,14 +180,17 @@
                     <Pagination {table}/>
                 {/snippet}
             </Datatable>
+            </div>
+
             <Modal bind:showModal>
                 {#snippet header()}
                     <h2>Select columns to display</h2>
                 {/snippet}
                 {#each view.columns as column}
-                    <button type="button" 
+                    <button type="button"
+                        class="col-btn"
                         class:active={column.isVisible}
-                        onclick={() => column.toggle()}
+                        onclick={() => column.toggle!()}
                     >
                         {column.name}
                     </button>
