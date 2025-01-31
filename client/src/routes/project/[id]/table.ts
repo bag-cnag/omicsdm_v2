@@ -14,7 +14,7 @@ export const reload = async (
     if (extra_q){
         query["q"] = extra_q
     }
-    query["project_id"] = +id
+    query["project_id"] = [+id]
     query.start = +offset
     query.end = currentPage * rowsPerPage
     query.count = true

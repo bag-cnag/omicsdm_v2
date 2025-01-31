@@ -79,7 +79,7 @@ export async function uploadChunk(chunk: Blob, url: string){
 
 
 export async function datasetRelease(
-    ev: SubmitEvent,
+    ev: Event,
     dataset: Dataset,
     read_selected: Array<string>,
     write_selected: Array<string>,

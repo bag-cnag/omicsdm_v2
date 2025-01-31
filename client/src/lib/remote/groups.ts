@@ -1,6 +1,5 @@
 import { getGroups } from "client";
 import { get, writable } from "svelte/store";
-import { isEmpty } from "$lib/types/array";
 
 
 const _all_groups = writable<string[]>([]);
@@ -8,7 +7,7 @@ const _all_groups = writable<string[]>([]);
 
 export async function groupsForMultiselect(): Promise<string[]> {
     let stored = get(_all_groups)
-    if(!isEmpty(stored)){
+    if(stored?.length){
         return stored
     }
 

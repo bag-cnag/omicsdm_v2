@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { DatasetSchema, getProjectsById, type Dataset, type Project} from "client";
+    import { DatasetSchema as dsSchema, getProjectsById, type Dataset, type Project} from "client";
 
     import { page } from "$app/state";
     import { goto } from '$app/navigation';
@@ -20,6 +20,11 @@
     import { onMount } from "svelte";
     import { toTitle } from "$lib/types/str";
     import { datasetGet } from "$lib/types/client/Dataset";
+    import { listGroupToListPaths, listGroupToPreSelection } from "$lib/form/helpers";
+    import { groupsForMultiselect } from "$lib/remote/groups";
+    import { OpenAPIV3 } from "openapi-types"
+    import { schemaGetProp } from "$lib/types/client/Schema";
+
 
     // Local context
     const { id } = page.params;
@@ -47,16 +52,12 @@
         if (response.response.ok){
             page_project = response.data!;
 
-            // Fill in data for sharing
-            if(page_project.perm_datasets && page_project.perm_datasets.write){
-                for(const one of page_project.perm_datasets.write.groups!){
-                    pr_write_selected.push(one.path!);
-                }
-            }
-            if(page_project.perm_datasets && page_project.perm_datasets.download){
-                for(const one of page_project.perm_datasets.download.groups!){
-                    pr_download_selected.push(one.path!);
-                }
+            if ($isAuthenticated && $groups.includes("admin")){
+                // Fill in data for sharing
+                const all_groups = await groupsForMultiselect();
+
+                pr_write_selected = listGroupToPreSelection(page_project.perm_datasets?.write, all_groups);
+                pr_download_selected = listGroupToPreSelection(page_project.perm_datasets?.download, all_groups);
             }
         } else {
             goto('/');
@@ -99,6 +100,8 @@
             });
         });
     }
+
+    const DatasetSchema = (dsSchema as unknown as OpenAPIV3.BaseSchemaObject);
 </script>
                 
 <style lang="postcss">
@@ -149,12 +152,12 @@
                         </tr>
                         <tr>
                             {#each dataset_fields as field}
-                                {#if DatasetSchema.properties[field].type == 'boolean'}
+                                {#if schemaGetProp((DatasetSchema), field)?.type == 'boolean'}
                                     <ThEnumFilter {table} field={field as keyof Dataset}
-                                                          options={[true, false]}/>
-                                {:else if DatasetSchema.properties[field].enum}
+                                        options={["true", "false"]}/>
+                                {:else if schemaGetProp((DatasetSchema), field)?.enum}
                                     <ThEnumFilter {table} field={field as keyof Dataset} 
-                                                          options={DatasetSchema.properties[field].enum}/>
+                                        options={(schemaGetProp((DatasetSchema), field)!.enum as string[])}/>
                                 {:else}
                                     <ThFilter {table} field={field as keyof Dataset}/>
                                 {/if}
@@ -165,11 +168,9 @@
                         {#each table.rows as row}
                         <tr onclick={() => {goto('/dataset/'+row.id + '_' + row.version)}}>
                             {#each dataset_fields as field}
-                                {#if DatasetSchema.properties[field].format == 'date'}
-                                    <td nowrap>{datasetGet(row, field)}</td>
-                                {:else}
-                                    <td>{datasetGet(row, field)}</td>
-                                {/if}
+                                <td style={schemaGetProp((DatasetSchema), field)?.format == 'date' ? "white-space: nowrap;" : null}>
+                                    {datasetGet(row, field)}
+                                </td>
                             {/each}
                         </tr>
                         {/each}
@@ -203,10 +204,12 @@
             <TabItem title="+New Dataset">
                 <h1>Create new Dataset in project: {page_project.short_name}</h1>
                 <DatasetForm
-                    onsubmit={(e: SubmitEvent) => (datasetCreate(
+                    onsubmit={(e) => (datasetCreate(
                             e, +page_project!.id!,
                             ds_read_selected, ds_write_selected, ds_download_selected
                     ))}
+                    write_options={listGroupToListPaths(page_project!.perm_datasets!.write)}
+                    download_options={listGroupToListPaths(page_project!.perm_datasets!.download)}
                     bind:read_selected={ds_read_selected}
                     bind:write_selected={ds_write_selected}
                     bind:download_selected={ds_download_selected}

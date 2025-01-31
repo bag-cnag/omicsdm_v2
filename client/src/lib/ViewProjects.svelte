@@ -4,7 +4,7 @@
     import type { Project } from 'client';
 
     async function fetchProjects(){
-        const res = await getProjects({});
+        const res = await getProjects();
         if (res.response.ok) {
             return (res.data as Project[]);
         } else if (res.response.status === 511) {

@@ -59,6 +59,8 @@ def multipart_upload(filepath, parts) -> List[Dict[str, str]]:
                 part['form'], data=part_data, headers={'Content-Encoding': 'gzip'}
             )
             assert response.status_code == 200
+            # if not (response.status_code == 200):
+                # print(response.text)
 
             # Get etag.
             etag = response.headers.get('ETag', "").replace('"', '') # comes with trailing quotes.
@@ -92,10 +94,45 @@ groups = [{
           "firstName": "Thomas",
           "lastName": "Anderson"
         }
-      ]
+      ],
     }
   ]
-}]
+},{
+    "path": "CRG",
+    "users": [
+        {
+            "username": "smith",
+            "password": "1234",
+            "email": "smith@keycloak.local",
+            "firstName": "Agent",
+            "lastName": "Smith",
+        }
+    ]
+},{
+    "path": "CNAG__OMICS__T1",
+},
+{
+    "path": "CNAG__OMICS__T2",
+},
+{
+    "path": "CNAG__SC",
+},
+{
+    "path": "CNAG__SC__T1",
+},
+{
+    "path": "CNAG__SC__T2",
+},
+{
+    "path": "CRG__LS",
+},
+{
+    "path": "CRG__LS__T1",
+},
+{
+    "path": "CRG__LS__T2",
+},
+]
 
 
 projects = [
@@ -183,7 +220,33 @@ projects = [
             "healthy_controls_included": "true",
             "additional_info": "rrrr",
             "tags": [{"name": "skibidi"},{"name": "bapbap"}],
-            "contact_username": "neo"
+            "contact_username": "neo",
+            "perm_self": {
+                "read": {"groups": [{"path": "CNAG__OMICS"}]}
+            }
+        },{
+            "short_name": "dataset_0103",
+            "long_name": "My dataset number three, from project number one",
+            "description": "Praesent ex leo, faucibus id arcu sit amet, pharetra vehicula nunc.",
+            "disease": "MS",
+            "treatment": "Anti Inflamatory",
+            "molecular_info": "vvv",
+            "sample_type": "sss",
+            "data_type": "ddd",
+            "value_type": "qqq",
+            "platform": "ppp",
+            "genome_assembly": "iii",
+            "annotation": "nnn",
+            "samples_count": "555",
+            "features_count": "777",
+            "features_id": "drf",
+            "healthy_controls_included": "false",
+            "additional_info": "ref",
+            "tags": [{"name": "kraakraa"},{"name": "trruuu"}],
+            "contact_username": "admin",
+            "perm_self": {
+                "read": {"groups": [{"path": "CNAG__OMICS__T1"}]}
+            }
         }],
         "perm_datasets": {
             "write": {"groups": [{"path": "CNAG"}]}
@@ -194,6 +257,39 @@ projects = [
         "long_name": "My project number two",
         "description": "Fuga optio fugit facilis dolores. Error quia in voluptates autem iste doloribus voluptate. Pariatur consectetur molestias tempora at repudiandae placeat similique. Cum numquam est debitis ipsum quam. Voluptatum et ut est iste voluptas ut fugiat.",
         "logo_url": "https://cdn.pixabay.com/photo/2020/09/16/18/39/icon-5577198_960_720.png",
+        "datasets": [{
+            "short_name": "dataset_0201",
+            "long_name": "My dataset number one, from project number two",
+            "description": "Curabitur elit dui, ultrices vel hendrerit eget, hendrerit id mauris.",
+            "disease": "CD",
+            "treatment": "Paracetamol",
+            "molecular_info": "aaaa",
+            "sample_type": "bbbb",
+            "data_type": "cccc",
+            "value_type": "dddd",
+            "platform": "gggg",
+            "genome_assembly": "eeee",
+            "annotation": "ffff",
+            "samples_count": "444",
+            "features_count": "666",
+            "features_id": "hhhh",
+            "healthy_controls_included": "false",
+            "additional_info": "jjjj",
+            "tags": [{"name": "skuuu"},{"name": "krappap"}],
+            "contact_username": "neo",
+            "files": [
+                {
+                    "filename": "test02",
+                    "extension": "h5ad",
+                    "size": "24653425",
+                    "type": "molecular",
+                    "comment": "wxyz"
+                },
+            ],
+            "perm_self": {
+                "read": {"groups": [{"path": "CRG"}]}
+            }
+        }]
     },
     {
         "short_name": "proj_03",
@@ -232,7 +328,7 @@ assert pr_response.status_code == 201
 pr_json = json.loads(pr_response.text)
 
 # Upload files:
-for file in pr_json[0]['datasets'][0]['files']:
+for file in pr_json[0]['datasets'][0]['files'] + pr_json[1]['datasets'][0]['files']:
     if file['filename'] == 'test01' and file['extension'] == 'h5ad':
         file_path = Path(FILES_PATH, f"test_big.{file['extension']}")
     else:

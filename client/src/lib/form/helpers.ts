@@ -1,15 +1,40 @@
 import type {
-    AssoPermDatasetSelf, AssoPermDatasetFiles, Dataset, AssoPermProjectDatasets, Project
+    AssoPermDatasetSelf, AssoPermDatasetFiles, Dataset, AssoPermProjectDatasets, Project, ListGroup
 } from "client";
 
 
-function containsParent(ls: string[], element: string): boolean {
+export function containsParent(ls: string[], element: string): boolean {
     for(const v of ls){
         if(element != v && element.includes(v)){
             return true;
         }
     }
     return false;
+}
+
+
+export function listGroupToListPaths(lg: ListGroup | undefined): string[] {
+    const ls: string[] = [];
+    if(!lg || !lg.groups){
+        return ls;
+    }
+
+    for(const group of lg.groups){
+        ls.push(group.path!);
+    }
+
+    return ls.sort();
+}
+
+
+export function listGroupToPreSelection(lg: ListGroup | undefined, all_groups: string[]): string[] {
+    let pre_selected = listGroupToListPaths(lg);
+
+    pre_selected = pre_selected.concat(
+        all_groups.filter(item => containsParent(pre_selected, item))
+    )
+
+    return pre_selected;
 }
 
 

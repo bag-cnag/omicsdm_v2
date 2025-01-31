@@ -34,7 +34,7 @@ export async function projectShare(
 
 
 export function datasetCreate(
-    ev: SubmitEvent,
+    ev: Event,
     project_id: number,
     read_selected: Array<string>,
     write_selected: Array<string>,

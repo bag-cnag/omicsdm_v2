@@ -16,12 +16,12 @@ export const reload = async (
 
     extra_q += "ready=true"
     if (!extra_q.includes('type=')){
-        query.type = "clinical,molecular"
+        query.type = ["clinical","molecular"]
     }
 
     query["q"] = extra_q
-    query.dataset_id = +id
-    query.dataset_version = +version
+    query.dataset_id = [+id]
+    query.dataset_version = [+version]
     query.start = +offset
     query.end = currentPage * rowsPerPage
     query.enabled = true

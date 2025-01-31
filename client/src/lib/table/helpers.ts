@@ -1,3 +1,4 @@
+import { schemaGetProp } from "$lib/types/client/Schema";
 import type { Filter } from "@vincjo/datatables/server";
 import { OpenAPIV3 } from "openapi-types"
 
@@ -17,9 +18,10 @@ export function parseFilters(
                 continue;
             }
 
-            let target_type: string = schema.properties![field.toString()].type
+            let field_def = schemaGetProp(schema, field.toString())
+
             field = field.toString()
-            switch (target_type){
+            switch (field_def?.type){
                 case "boolean":
                     value = (value as string).toLowerCase()
                     if(value === 'true'){
@@ -30,15 +32,15 @@ export function parseFilters(
                     }
                     break;
                 case "string":
-                    if (schema.properties![field].format != "date"){
-                        if (schema.properties![field].enum){
+                    if (field_def.format != "date"){
+                        if (field_def.enum){
                             extra_q += field + '=' + (value as string)    
                         } else {
                             extra_q += field + '=*' + (value as string).split(',').join('*,*') + '*'
                         }
                         break;
                     }
-                case "float":
+                case "number":
                 case "integer":
                     const [c1, c2, ...tail] = (value as string);
                     let op  = "";

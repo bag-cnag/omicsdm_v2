@@ -23,7 +23,6 @@
     import { SvgDownload, SvgUpload, SvgTrashBin, SvgEye } from "$lib/icons";
     import { DatasetForm, FileForm } from "$lib/form";
     import { clearFormErrors, displayFormError } from '$lib/form/messages'
-    import { isEmpty } from "$lib/types/array";
 
     import { reload } from "./table";
     import Overview from "./Overview.svelte";
@@ -32,6 +31,8 @@
         datasetShare, visualizeFile, extractAndValidateFile
     } from "./submit"
     import UploadCard from "$lib/ui/UploadCard.svelte";
+    import { listGroupToListPaths, listGroupToPreSelection } from "$lib/form/helpers";
+    import { groupsForMultiselect } from "$lib/remote/groups";
 
     // Local context
     const { id, version } = page.params;
@@ -54,6 +55,7 @@
 
 
     onMount(async ()=>{
+        let all_groups = await groupsForMultiselect();
         let response = await getDatasetsByIdByVersion({
             path: {
                 id: id,
@@ -62,22 +64,6 @@
         })
         if (response.response.ok){
             page_dataset = response.data!
-            // Fill in data
-            if(page_dataset.perm_files && page_dataset.perm_files.write){
-                for(const one of page_dataset.perm_files.write.groups!){
-                    write_selected.push(one.path!)
-                }
-            }
-            if(page_dataset.perm_self && page_dataset.perm_self.download){
-                for(const one of page_dataset.perm_self.download.groups!){
-                    download_selected.push(one.path!)
-                }
-            }
-            if(page_dataset.perm_self && page_dataset.perm_self.read){
-                for(const one of page_dataset.perm_self.read.groups!){
-                    read_selected.push(one.path!)
-                }
-            }
 
             let pr_response = await getProjectsById({
                 path: {
@@ -86,51 +72,52 @@
             });
             if(pr_response.response.ok){
                 page_project = pr_response.data;
+
+                if (checkGroups(page_project!.perm_datasets!.write)){
+                    // Pre Fill in data for sharing.
+                    write_selected = listGroupToPreSelection(page_dataset.perm_files?.write, all_groups);
+                    download_selected = listGroupToPreSelection(page_dataset.perm_self?.download, all_groups);
+                    read_selected = listGroupToPreSelection(page_dataset.perm_self?.read, all_groups);
+                }
             }
 
             let li_res = await getFiles({
-                // TODO: probably buggy as this fetches last file regardless of it being a licence or not.
                 query: {
-                    dataset_id: +page_dataset.id!,
-                    dataset_version: +page_dataset.version!,
-                    fields: 'id,version',
-                    type: 'licence',
+                    dataset_id: [+page_dataset.id!],
+                    dataset_version: [+page_dataset.version!],
+                    fields: ['id','version'],
+                    type: ['licence'],
                     q: 'validated_at.max_a()'
                 }
             })
             if (li_res.response.ok){
-                if(!isEmpty(li_res.data!)){
+                if(li_res.data?.length){
                     licence = (li_res.data![0] as SrvFile)
                 }
             }
 
             let lu_res = await getFiles({
                 query: {
-                    dataset_id: +page_dataset.id!,
-                    dataset_version: +page_dataset.version!,
-                    fields: 'validated_at',
-                    type: 'molecular,clinical',
+                    dataset_id: [+page_dataset.id!],
+                    dataset_version: [+page_dataset.version!],
+                    fields: ['validated_at'],
+                    type: ['molecular', 'licence'],
                     q: 'validated_at.max_a()'
                 }
             })
             if (lu_res.response.ok){
-                if(!isEmpty(lu_res.data!)){
+                if(lu_res.data?.length){
                     last_upload = (lu_res.data![0] as Partial<SrvFile>)
                 }
             }
         }
 
         // fetch adjacent versions
-        let qs_version = ((+version) +1).toString()
-        if (+version > 1){
-            qs_version += ","+((+version) -1).toString()
-        }
-
         let adjacents = await getDatasets({
             query: {
-                id: +id,
-                version: qs_version,
-                fields: "id,version"
+                id: [+id],
+                version: [+version-1, +version+1],
+                fields: ["id","version"]
             }
         })
         if (adjacents.response.ok){
@@ -380,6 +367,8 @@
                     id="share_dataset_form"
                     btnText="Share"
                     dataset={page_dataset}
+                    write_options={listGroupToListPaths(page_project!.perm_datasets!.write)}
+                    download_options={listGroupToListPaths(page_project!.perm_datasets!.download)}
                     bind:read_selected
                     bind:write_selected
                     bind:download_selected
@@ -396,10 +385,12 @@
                             id="release_dataset_form"
                             btnText="Release"
                             dataset={page_dataset}
+                            write_options={listGroupToListPaths(page_project!.perm_datasets!.write)}
+                            download_options={listGroupToListPaths(page_project!.perm_datasets!.download)}
                             bind:read_selected
                             bind:write_selected
                             bind:download_selected
-                            onsubmit={(e: SubmitEvent) => (
+                            onsubmit={(e) => (
                                 datasetRelease(e, page_dataset!, read_selected, write_selected, download_selected)
                             )}
                         />

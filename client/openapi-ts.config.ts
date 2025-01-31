@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [
     '@hey-api/schemas',
     '@hey-api/services',
-    '@tanstack/svelte-query',
+    // '@tanstack/svelte-query',
     // 'zod'
     // {
     //   dates: true,

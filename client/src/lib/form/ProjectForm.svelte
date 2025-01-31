@@ -5,33 +5,42 @@
     import { Form, AutoInput, InputContainer } from "./components"
     import { Textarea } from "flowbite-svelte";
     import GroupMultiSelect from "./components/GroupMultiSelect.svelte";
+    import { containsParent } from "./helpers";
+    import type { EventHandler, HTMLAttributes } from "svelte/elements";
 
-    let {
-        btnText = "Create",
-        id = null,
-        project = {},
-        isSharing = false,
-        write_selected = $bindable(),
-        download_selected = $bindable(),
-        onsubmit
-    } : {
+
+    type Props = {
         btnText?: string,
         id?: string | null,
         project?: Project | Partial<Project>,
         isSharing?: boolean,
-        write_selected: Array<string>,
-        download_selected: Array<string>,
-        onsubmit: Function
-    } = $props();
+        write_selected: string[],
+        download_selected: string[],
+        onsubmit: EventHandler
+    } & HTMLAttributes<HTMLFormElement>;
+
+    let {
+        btnText = "Create",
+        project = {},
+        isSharing = false,
+        write_selected = $bindable(),
+        download_selected = $bindable(),
+        onsubmit,
+        ...rest
+    } : Props = $props();
 
     let all_groups: string[] = $state([])
+    let mounted = $state(false);
 
     onMount(async ()=>{
         all_groups = await groupsForMultiselect()
+
+        mounted = true;
     })
 </script>
 
-<Form id={id} btnText={btnText} onsubmit={onsubmit}>
+{#if mounted}
+<Form btnText={btnText} onsubmit={onsubmit} {...rest}>
     {#if !isSharing}
         <AutoInput schema={ProjectSchema} field="short_name" value={project.short_name}/>
         <AutoInput schema={ProjectSchema} field="long_name" value={project.long_name}/>
@@ -48,6 +57,7 @@
         <GroupMultiSelect id="download_groups" size="lg" options={all_groups} bind:selected={download_selected} />
     </InputContainer>
 </Form>
+{/if}
 
 <!-- <AutoInput schema={DatasetSchema} field="long_name" value={dataset.long_name}/> -->
 

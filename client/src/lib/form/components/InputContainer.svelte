@@ -1,7 +1,16 @@
-<script>
+<script lang="ts">
     import { toTitle } from "$lib/types/str";
-    // import type { Snippet } from 'svelte';
-    let { field, required, children = $bindable()} = $props();
+    import type { Snippet } from 'svelte';
+
+    let {
+        field,
+        required,
+        children = $bindable()
+    } : {
+        field: string,
+        required: boolean,
+        children: Snippet
+    } = $props();
 </script>
 
 

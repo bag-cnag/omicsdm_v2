@@ -1,8 +1,20 @@
 <script lang="ts">
-    let { btnText, id = null, onsubmit, children = $bindable() } = $props();
+    import type { Snippet } from "svelte";
+    import type { EventHandler } from "svelte/elements";
+
+    let {
+        btnText,
+        onsubmit,
+        children,
+        ...rest
+    } : {
+        btnText: string,
+        onsubmit?: EventHandler,
+        children?: Snippet
+    } = $props();
 </script>
 
-<form id={id} class="p-3 w-2/3" onsubmit={onsubmit}>
+<form class="p-3 w-2/3" onsubmit={onsubmit} {...rest}>
     <div class="text-white bg-green-500 rounded-md w-1/3 successMessages"></div>
     <div class="p-3 successMessagesFiller"><p>&nbsp;</p></div>
 
