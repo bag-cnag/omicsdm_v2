@@ -101,7 +101,7 @@
                     dataset_id: [+page_dataset.id!],
                     dataset_version: [+page_dataset.version!],
                     fields: ['validated_at'],
-                    type: ['molecular', 'licence'],
+                    type: ['molecular', 'clinical'],
                     q: 'validated_at.max_a()'
                 }
             })
