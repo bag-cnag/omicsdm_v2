@@ -24,5 +24,14 @@
             ],
             "type": "node-terminal"
         },
+        {
+            "name": "Debug Script",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/scripts/odmv2_data_inserter.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/server/venv/bin/python3",
+            "justMyCode": false
+        },
     ]
 }
