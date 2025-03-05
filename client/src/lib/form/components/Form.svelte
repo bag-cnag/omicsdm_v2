@@ -1,17 +1,19 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import type { EventHandler } from "svelte/elements";
+    import type { EventHandler, HTMLAttributes } from "svelte/elements";
+
+    type Props = {
+        btnText: string,
+        onsubmit?: EventHandler,
+        children?: Snippet
+    } & HTMLAttributes<HTMLFormElement>;
 
     let {
         btnText,
         onsubmit,
         children,
         ...rest
-    } : {
-        btnText: string,
-        onsubmit?: EventHandler,
-        children?: Snippet
-    } = $props();
+    } : Props = $props();
 </script>
 
 <form class="p-3 w-2/3" onsubmit={onsubmit} {...rest}>

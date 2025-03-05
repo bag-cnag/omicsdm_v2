@@ -1,15 +1,8 @@
-// Simple svelte store.
 import { writable, get } from "svelte/store";
 import { persisted } from 'svelte-persisted-store'
 import { browser } from "$app/environment"
 import { type GetSynAckResponse, type ListGroup, postRefresh } from './client';
 
-
-// export const isAuthenticated = writable<boolean>(false);
-// export const token = writable<GetSynAckResponse>();
-// export const user = writable<string>("anon");
-// export const groups = writable<Array<string>>();
-// export const expires = writable<number>();
 
 export const isAuthenticated = persisted<boolean>('ls_isAuthenticated', false);
 export const token = persisted<GetSynAckResponse>('ls_token', {});
@@ -43,7 +36,7 @@ export const checkGroups = (lg: ListGroup | undefined) => {
     return true
   for(const allowed_group of lg.groups){ // group path matching
     for(const user_group of get(groups)){
-      if (allowed_group.path?.includes(user_group))
+      if (user_group.includes(allowed_group.path!))
         return true
     }
   }

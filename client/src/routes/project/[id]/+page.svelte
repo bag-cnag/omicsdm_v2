@@ -1,29 +1,33 @@
 <script lang="ts">
     import { DatasetSchema as dsSchema, getProjectsById, type Dataset, type Project} from "client";
+    import { checkGroups, isAuthenticated, groups } from "auth";
 
     import { page } from "$app/state";
     import { goto } from '$app/navigation';
+    import { onMount } from "svelte";
 
+    import { OpenAPIV3 } from "openapi-types"
     import { Tabs, TabItem } from 'flowbite-svelte';
     import { 
         TableHandler, Datatable, Th,
         ThFilter, RowCount, RowsPerPage, Pagination, type State
     } from '@vincjo/datatables/server'
     import ThEnumFilter from "$lib/table/ThEnumFilter.svelte";
+    import { Modal } from "flowbite-svelte";
 
-    import { checkGroups, isAuthenticated, groups } from "auth";
     import { DatasetForm, ProjectForm } from "$lib/form";
-    import Modal from "$lib/ui/Modal.svelte";
+
+    import { horizontallyScrollable } from "$lib/ui/anim";
     import SvgColumns from "$lib/icons/SvgColumns.svelte";
-    import { reload } from "./table";
-    import { datasetCreate, projectShare } from "./submit";
-    import { onMount } from "svelte";
     import { toTitle } from "$lib/types/str";
     import { datasetGet } from "$lib/types/client/Dataset";
     import { listGroupToListPaths, listGroupToPreSelection } from "$lib/form/helpers";
     import { groupsForMultiselect } from "$lib/remote/groups";
-    import { OpenAPIV3 } from "openapi-types"
     import { schemaGetProp } from "$lib/types/client/Schema";
+    import Form from "$lib/form/components/Form.svelte";
+
+    import { reload } from "./table";
+    import { datasetCreate, projectShare } from "./submit";
 
 
     // Local context
@@ -40,15 +44,11 @@
 
 
     // https://github.com/vincjo/datatables/blob/main/src/routes/examples/server/pokedex-api/Main.svelte
-    table.load( (state: State) => reload(state, id));
+    table.load((state: State) => reload(state, id));
     table.invalidate();
 
     onMount(async ()=>{
-        let response = await getProjectsById({
-            path: {
-                id: +id
-            }
-        })
+        let response = await getProjectsById({path: {id: +id}})
         if (response.response.ok){
             page_project = response.data!;
 
@@ -56,8 +56,8 @@
                 // Fill in data for sharing
                 const all_groups = await groupsForMultiselect();
 
-                pr_write_selected = listGroupToPreSelection(page_project.perm_datasets?.write, all_groups);
-                pr_download_selected = listGroupToPreSelection(page_project.perm_datasets?.download, all_groups);
+                pr_write_selected = listGroupToPreSelection(page_project!.perm_datasets?.write, all_groups);
+                pr_download_selected = listGroupToPreSelection(page_project!.perm_datasets?.download, all_groups);
             }
         } else {
             goto('/');
@@ -67,6 +67,7 @@
     const dataset_fields = [
         "short_name",
         "long_name",
+        "version",
         "submission_date",
         "disease",
         "treatment",
@@ -91,19 +92,9 @@
         i++;
     }
     const view = table.createView(view_input);
-
-    function horizontallyScrollable(element: HTMLElement){
-        element.addEventListener('wheel', (event) => {
-            event.preventDefault();
-            element.scrollBy({
-                left: (event.deltaY + event.deltaX)/2,
-            });
-        });
-    }
-
     const DatasetSchema = (dsSchema as unknown as OpenAPIV3.BaseSchemaObject);
 </script>
-                
+
 <style lang="postcss">
     tr {
         cursor: pointer;
@@ -124,10 +115,11 @@
     <TabItem open title="Overview">
         <div class="md:flex md:items-center space-y-4 flex flex-wrap">
             <img style="height:200px" src="{page_project.logo_url}" alt="logo">
-            <p>{page_project.short_name}</p>
-            <p>{page_project.long_name}</p>
-            <p>{page_project.description}</p>
-
+            <div class="ml-4">
+                <p>{page_project.short_name}</p><br/>
+                <p>{page_project.long_name}</p><br/>
+                <p>{page_project.description}</p><br/>
+            </div>
             <hr class="w-full">
             <div id="dt-container" class="overflow-x-hidden overflow-y-hidden"
                  use:horizontallyScrollable
@@ -183,10 +175,9 @@
             </Datatable>
             </div>
 
-            <Modal bind:showModal>
-                {#snippet header()}
-                    <h2>Select columns to display</h2>
-                {/snippet}
+            <Modal bind:open={showModal} outsideclose>
+                <h2>Select columns to display</h2>
+                <hr />
                 {#each view.columns as column}
                     <button type="button"
                         class="col-btn"
@@ -200,26 +191,40 @@
         </div>
     </TabItem>
     <div class="flex absolute right-0">
-        {#if checkGroups(page_project!.perm_datasets!.write)}
+        {#if checkGroups(page_project!.perm_datasets?.write)}
             <TabItem title="+New Dataset">
                 <h1>Create new Dataset in project: {page_project.short_name}</h1>
-                <DatasetForm
-                    onsubmit={(e) => (datasetCreate(
-                            e, +page_project!.id!,
-                            ds_read_selected, ds_write_selected, ds_download_selected
-                    ))}
-                    write_options={listGroupToListPaths(page_project!.perm_datasets!.write)}
-                    download_options={listGroupToListPaths(page_project!.perm_datasets!.download)}
-                    bind:read_selected={ds_read_selected}
-                    bind:write_selected={ds_write_selected}
-                    bind:download_selected={ds_download_selected}
-                />
+                <div class="flex flex-row">
+                    <DatasetForm
+                        onsubmit={(e) => (datasetCreate(
+                                e, +page_project!.id!,
+                                ds_read_selected, ds_write_selected, ds_download_selected
+                        ))}
+                        write_options={listGroupToListPaths(page_project!.perm_datasets?.write)}
+                        download_options={listGroupToListPaths(page_project!.perm_datasets?.download)}
+                        bind:read_selected={ds_read_selected}
+                        bind:write_selected={ds_write_selected}
+                        bind:download_selected={ds_download_selected}
+                    />
+                    <div class="w-1/5 mt-4">
+                        <Form btnText="Send" class="border-2 border-solid p-2">
+                            Or - Create from:
+                            <select id="format" name="format" onchange={()=>{}}>
+                                <option value="tsv">TSV</option>
+                                <option value="json">JSON</option>
+                            </select>
+                            <button id="dl_template_btn" class="m-2 mr-8 ml-8 pri-btn">template</button>
+                            <input type="file" id="ds_metadata_file" name="ds_metadata_file">
+                        </Form>
+                    </div>
+                </div>
             </TabItem>
         {/if}
         {#if $isAuthenticated && $groups.includes("admin")}
             <TabItem title="Share">
                 <ProjectForm
                     id="share_project_form"
+                    btnText="Share"
                     isSharing={true}
                     bind:write_selected={pr_write_selected}
                     bind:download_selected={pr_download_selected}

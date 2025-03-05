@@ -85,7 +85,7 @@ export function extractProjectPermissions(
             perm_datasets.write.groups!.push({"path": path})
     } else
         perm_datasets.write = {}
-    
+
     if (download_selected && download_selected.length){
         perm_datasets.download = {groups: []}
         for(const path of download_selected.filter(item => !containsParent(download_selected, item)))

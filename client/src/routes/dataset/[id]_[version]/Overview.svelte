@@ -6,6 +6,7 @@
 
     import { toTitle } from "$lib/types/str";
     import { datasetGet } from "$lib/types/client/Dataset";
+    import { checkGroups } from "auth";
 
     let {
         dataset,
@@ -58,11 +59,6 @@
     .nav-link {
         @apply w-52 m-2 ml-4;
     }
-
-    .nav-link span {
-        text-align: center;
-        vertical-align: middle;
-    }
 </style>
 
 <div class="flex flex-row">
@@ -112,11 +108,11 @@
 
             <hr class="w-full mt-2 mb-2">
 
-            {#if licence}
+            {#if licence && checkGroups(project.perm_datasets?.download)}
 
                 <h3 class="text-gray-500 dark:text-gray-400 ml-2">Licence</h3>
 
-                <button type="button" id="btn-link" class="pri-btn nav-link" onclick={() => {downloadFile(licence!)}}>
+                <button type="button" id="btn-link" class="nav-link pri-btn" onclick={() => {downloadFile(licence!)}}>
                     <div class="float-left align-center">Download</div><div class="float-right"><SvgPdf cclass="text-white dark:text-gray-800"/></div>
                 </button>
 

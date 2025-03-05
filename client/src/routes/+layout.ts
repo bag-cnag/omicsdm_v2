@@ -2,7 +2,7 @@ export const ssr = false;
 export const csr = true;
 export const prerender = false;
 import { endpoint } from '$lib/config';
-import { client, getLogin } from 'client/services.gen';
+import { client, getLogin, type Error } from 'client';
 import { get } from 'svelte/store'
 import { refresh, token, expires } from 'auth';
 import { isEmpty } from '$lib/types/obj';
@@ -27,13 +27,14 @@ client.interceptors.request.use(async (request, options) => {
 
 // Redirect to login in case it is required
 client.interceptors.response.use(async (response, request, options) => {
-    if (response.status == 511){
-        if(window.location.href !== window.location.origin + '/'){
-            let url = (await getLogin({
-                    query: {
-                      redirect_uri: window.location.origin + "/login"
-                    }
-                })).data;
+    if (response.status == 511 && window.location.href !== window.location.origin + '/'){
+        const url = (await getLogin({ // TODO: use store if possible.
+            query: {
+              redirect_uri: window.location.origin + "/login"
+            }
+        })).data;
+        const content: Error = await response.clone().json()
+        if(content.message.includes('Authentication required.')){
             window.location.assign(url!);
         }
     }

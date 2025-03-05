@@ -1,38 +1,40 @@
 <script lang="ts">
     import {
         getDatasetsByIdByVersion, getDatasets, postFiles,
-        putFilesByIdByVersionComplete, getProjectsById,
-        postFilesByIdByVersionRelease, deleteFilesByIdByVersion,
+        getProjectsById, postFilesByIdByVersionRelease, deleteFilesByIdByVersion,
         FileSchema, getFiles
     } from "client";
-    import type { PartsEtag, File as SrvFile, Dataset, Project } from "client"
+    import type { File as SrvFile, Dataset, Project } from "client"
+    import { checkGroups } from "auth";
 
-    import { mount, onMount, unmount} from 'svelte';
+    import { mount, onMount, unmount } from 'svelte';
     import { page } from "$app/state";
 
-    import { Tabs, TabItem } from 'flowbite-svelte';
+    import { Tabs, TabItem, Modal } from 'flowbite-svelte';
     import { 
         TableHandler, Datatable, Th, ThFilter,
         RowCount, RowsPerPage, Pagination, type State
     } from '@vincjo/datatables/server'
     import ThEnumFilter from "$lib/table/ThEnumFilter.svelte";
 
-
-    import { checkGroups } from "auth";
-    import Modal from "$lib/ui/Modal.svelte";
     import { SvgDownload, SvgUpload, SvgTrashBin, SvgEye } from "$lib/icons";
     import { DatasetForm, FileForm } from "$lib/form";
     import { clearFormErrors, displayFormError } from '$lib/form/messages'
+    import { listGroupToListPaths, listGroupToPreSelection } from "$lib/form/helpers";
+    import { groupsForMultiselect } from "$lib/remote/groups";
+    import { chunkSize } from "$lib/config";
+    import { ResumeCard, UploadCard }  from "$lib/ui";
 
     import { reload } from "./table";
     import Overview from "./Overview.svelte";
     import {
-        uploadChunk, downloadFile, datasetRelease,
-        datasetShare, visualizeFile, extractAndValidateFile
+        uploadFile, downloadFile, datasetRelease,
+        datasetShare, visualizeFile, extractAndValidateFile,
     } from "./submit"
-    import UploadCard from "$lib/ui/UploadCard.svelte";
-    import { listGroupToListPaths, listGroupToPreSelection } from "$lib/form/helpers";
-    import { groupsForMultiselect } from "$lib/remote/groups";
+
+    interface FileAndResumeCard extends SrvFile {
+        card: ResumeCard
+    };
 
     // Local context
     const { id, version } = page.params;
@@ -45,6 +47,7 @@
     let update_datset = $state.raw<Dataset>();
     let licence = $state<Partial<SrvFile>>();
     let last_upload = $state<Partial<SrvFile>>();
+    let failed_uploads = $state<Array<Partial<FileAndResumeCard>>>([]);
 
     let prev_version = $state.raw<Dataset>()
     let next_version = $state.raw<Dataset>()
@@ -67,24 +70,27 @@
 
             let pr_response = await getProjectsById({
                 path: {
-                    id: page_dataset.project_id
+                    id: page_dataset!.project_id
+                },
+                query: {
+                    fields: ['id', 'perm_files', 'perm_datasets']
                 }
             });
             if(pr_response.response.ok){
                 page_project = pr_response.data;
 
-                if (checkGroups(page_project!.perm_datasets!.write)){
+                if (checkGroups(page_project!.perm_datasets?.write)){
                     // Pre Fill in data for sharing.
-                    write_selected = listGroupToPreSelection(page_dataset.perm_files?.write, all_groups);
-                    download_selected = listGroupToPreSelection(page_dataset.perm_self?.download, all_groups);
-                    read_selected = listGroupToPreSelection(page_dataset.perm_self?.read, all_groups);
+                    write_selected = listGroupToPreSelection(page_dataset!.perm_files?.write, all_groups);
+                    download_selected = listGroupToPreSelection(page_dataset!.perm_self?.download, all_groups);
+                    read_selected = listGroupToPreSelection(page_dataset!.perm_self?.read, all_groups);
                 }
             }
-
+            // Licence
             let li_res = await getFiles({
                 query: {
-                    dataset_id: [+page_dataset.id!],
-                    dataset_version: [+page_dataset.version!],
+                    dataset_id: [+page_dataset!.id!],
+                    dataset_version: [+page_dataset!.version!],
                     fields: ['id','version'],
                     type: ['licence'],
                     q: 'validated_at.max_a()'
@@ -95,11 +101,11 @@
                     licence = (li_res.data![0] as SrvFile)
                 }
             }
-
+            // Last Update
             let lu_res = await getFiles({
                 query: {
-                    dataset_id: [+page_dataset.id!],
-                    dataset_version: [+page_dataset.version!],
+                    dataset_id: [+page_dataset!.id!],
+                    dataset_version: [+page_dataset!.version!],
                     fields: ['validated_at'],
                     type: ['molecular', 'clinical'],
                     q: 'validated_at.max_a()'
@@ -109,6 +115,18 @@
                 if(lu_res.data?.length){
                     last_upload = (lu_res.data![0] as Partial<SrvFile>)
                 }
+            }
+
+            if (checkGroups(page_project!.perm_datasets?.write)
+                && checkGroups(page_dataset!.perm_files?.write)){
+                failed_uploads = await getFiles({
+                    query: {
+                        dataset_id: [+page_dataset!.id!],
+                        dataset_version: [+page_dataset!.version!],
+                        fields: ['id','version', 'filename', 'extension', 'size', 'upload'],
+                        ready: false,
+                    }
+                }).then((res) => res.response.ok ? res.data! : [])
             }
         }
 
@@ -130,8 +148,6 @@
         }
     })
 
-    const chunkSize = 100*1024 * 1024; // size of each chunk (100MB)
-
     // Initialize table
     const table = new TableHandler<SrvFile>([], { rowsPerPage: 5 })
     table.load((state: State) => reload(state, id, version))
@@ -139,7 +155,7 @@
     let action_bar = $state<Element>();
 
     // This method stays here because it touches local context stuff (table, showFUPModal)
-    async function uploadFormSubmit(ev: SubmitEvent, reup?: SrvFile){
+    async function uploadFormSubmit(ev: Event, reup?: SrvFile){
         clearFormErrors();
         const form = (ev.target! as HTMLFormElement);
         const formdata = new FormData(form);
@@ -185,41 +201,26 @@
                     (e as HTMLDialogElement).close();
                 });
 
-                // Upload file
-                let head = 0;
-                let parts_etags: Array<PartsEtag> = [];
-
-                //Progress
-                let i = 0;
-                let n = response.data!.upload!.parts!.length;
-
                 try {
-                    for (const part of response.data!.upload!.parts!){
-                        const etag = await uploadChunk(
-                            file.slice(head, head + chunkSize),
-                            part.form!
-                        );
-                        parts_etags.push({'PartNumber': part.part_number, 'ETag': etag});
-                        head += chunkSize;
-                        i++;
-                        up_card.progress = ((i/n)*100).toString();
-                    }
-
-                    let completion = await putFilesByIdByVersionComplete({
-                        path: {
-                            id: response.data!.id!,
-                            version: response.data!.version!
-                        },
-                        body: parts_etags
-                    })
+                    let completion = await uploadFile(
+                        file,
+                        response.data!.upload!.parts!,
+                        response.data!.id!,
+                        response.data!.version!,
+                        up_card
+                    );
 
                     if(completion.response.ok){
                         // Fade out card
-                        setInterval(() => {
+                        setTimeout(() => {
                             unmount(up_card, { outro: true })
                         }, 5000)
                         // Refresh table
                         table.invalidate();
+                        // If licence
+                        if(body.type == "licence"){
+                            licence = (response.data as SrvFile);
+                        }
                     } else {
                         let e = new Error(completion.error!.message);
                         up_card.error = e.message;                    
@@ -242,6 +243,40 @@
         }
     }
 
+    async function resumeUpload(ev: Event, failed_up: Partial<FileAndResumeCard>){
+        const finput = (ev.target! as HTMLFormElement);
+        const file = (finput.files as FileList)[0];
+        failed_up.card!.error = "";
+
+        if(file.size != failed_up.size!){
+            failed_up.card!.error = "File size mismatch";
+            return;
+        }
+
+        finput.style.setProperty('display', 'none');
+
+        const completion = await uploadFile(
+            file, failed_up.upload!.parts!, failed_up.id!, failed_up.version!, failed_up.card!
+        )
+        if(completion.response.ok){
+            // remove element from array => triggers card deletion.
+            setTimeout(() => {
+                let idx = failed_uploads.findIndex(
+                    u => (u.id === failed_up.id && u.version === failed_up.version)
+                );
+                if (idx !== -1) {
+                    failed_uploads.splice(idx, 1);
+                }
+            }, 5000)
+            // Refresh table
+            table.invalidate();
+        } else {
+            finput.style.setProperty('display', 'block');
+            failed_up.card!.error = completion.error!.message;
+            console.error(completion.error!.message)
+        }
+    }
+
     async function deleteFile(row: SrvFile){
         let response = await deleteFilesByIdByVersion({
             path: {
@@ -261,7 +296,6 @@
 
 
 {#if page_project && page_dataset} <!-- onMount succeded -->
-<!-- <div id="overlay-spinner-modal"><Spinner size={32}/></div> -->
 <Tabs class="relative">
     <TabItem open title="Overview">
         <Overview 
@@ -283,16 +317,16 @@
                 <table>
                     <thead>
                         <tr>
+                            <Th>Description</Th>
                             <Th>Name</Th>
                             <Th>Version</Th>
                             <Th>Submitter</Th>
                             <Th>Date</Th>
-                            <Th>Comment</Th>
                             <Th>Type</Th>
                             <Th>Actions</Th>
                         </tr>
                         <tr>
-                        <th></th>
+                        <ThFilter {table} field="description"/>
                         <ThFilter {table} field="version"/>
                         <th></th>
                         <th></th>
@@ -309,14 +343,14 @@
                     <tbody>
                         {#each table.rows as row}
                         <tr>
+                            <td>{row.description}</td>
                             <td>{row.filename}.{row.extension}</td>
                             <td>{row.version}</td>
                             <td>{row.submitter_username}</td>
                             <td>{row.validated_at}</td>
-                            <td>{row.comment}</td>
                             <td>{row.type}</td>
                             <td class="hiflex">
-                                {#if checkGroups(page_project!.perm_datasets!.download)}
+                                {#if checkGroups(page_project!.perm_datasets?.download)}
                                     <button type="button" title="Download" class="faction"
                                         onclick={() => {downloadFile(row)}}
                                     >
@@ -330,7 +364,8 @@
                                         <SvgEye />
                                     </button>
                                 {/if}
-                                {#if checkGroups(page_dataset!.perm_files!.write)}
+                                {#if checkGroups(page_project!.perm_datasets?.write)
+                                  && checkGroups(page_dataset!.perm_files?.write)}
                                     <button type="button" title="Re-Upload" class="faction"
                                         onclick={() => {
                                             fileToREUP = row;
@@ -357,18 +392,29 @@
                 {/snippet}
             </Datatable>
         </div>
-        <div id="action-bar" bind:this={action_bar} class="border-2 mt-5 min-h-4 inline-flex"></div>
+        <div id="action-bar" bind:this={action_bar} class="border-2 mt-5 min-h-4 inline-flex overflow-x-visible">
+            {#each failed_uploads as failed_up}
+                {@const n = Math.ceil(failed_up.size! / chunkSize)}
+                {@const progress = (failed_up.upload!.parts!.filter((v)=>v.etag).length / n)*100}
+                <ResumeCard
+                    bind:this={failed_up.card}
+                    filename={failed_up.filename + "." + failed_up.extension}
+                    progress={progress.toString()}
+                    onchange={(e)=>resumeUpload(e, failed_up)}
+                />
+            {/each}
+        </div>
     </TabItem>
     <div class="flex absolute right-0">
-        {#if checkGroups(page_project!.perm_datasets!.write)}
+        {#if checkGroups(page_project!.perm_datasets?.write)}
             <TabItem title="Share">
                 <DatasetForm
                     isSharing={true}
                     id="share_dataset_form"
                     btnText="Share"
                     dataset={page_dataset}
-                    write_options={listGroupToListPaths(page_project!.perm_datasets!.write)}
-                    download_options={listGroupToListPaths(page_project!.perm_datasets!.download)}
+                    write_options={listGroupToListPaths(page_project!.perm_datasets?.write)}
+                    download_options={listGroupToListPaths(page_project!.perm_datasets?.download)}
                     bind:read_selected
                     bind:write_selected
                     bind:download_selected
@@ -385,8 +431,8 @@
                             id="release_dataset_form"
                             btnText="Release"
                             dataset={page_dataset}
-                            write_options={listGroupToListPaths(page_project!.perm_datasets!.write)}
-                            download_options={listGroupToListPaths(page_project!.perm_datasets!.download)}
+                            write_options={listGroupToListPaths(page_project!.perm_datasets?.write)}
+                            download_options={listGroupToListPaths(page_project!.perm_datasets?.download)}
                             bind:read_selected
                             bind:write_selected
                             bind:download_selected
@@ -398,7 +444,8 @@
                 </TabItem>
             {/if}
         {/if}
-        {#if checkGroups(page_dataset!.perm_files!.write)}
+        {#if checkGroups(page_project!.perm_datasets?.write)
+          && checkGroups(page_dataset!.perm_files?.write)}
             <li role="presentation">
                 <button onclick={() => (showFUPModal = true)} type="button" role="tab" class="inline-block text-sm font-medium text-center disabled:cursor-not-allowed p-4 text-gray-500 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300">
                     + Upload
@@ -407,21 +454,21 @@
         {/if}
     </div>
 
-    <Modal bind:showModal={showFUPModal}>
-        {#snippet header()}
-            <h2>Upload A File</h2>
-        {/snippet}
+
+    <Modal bind:open={showFUPModal} outsideclose>
+        <h2>Upload A File</h2>
+		<hr />
         <div id="modal_content">
-            <FileForm id="file_upload_form" onsubmit={(e: SubmitEvent) => uploadFormSubmit(e)}/>
+            <FileForm id="file_upload_form" onsubmit={(e: Event) => uploadFormSubmit(e)}/>
         </div>
     </Modal>
-    <Modal bind:showModal={showFREUPModal}>
-        {#snippet header()}
-            <h2>Upload A new Version for this File</h2>
-        {/snippet}
+
+    <Modal bind:open={showFREUPModal} outsideclose>
+        <h2>Upload A new Version for this File</h2>
+		<hr />
         <div id="modal_content">
             <FileForm id="file_reupload_form" bind:reupFile={fileToREUP}
-                onsubmit={(e: SubmitEvent) => uploadFormSubmit(e, fileToREUP)}
+                onsubmit={(e: Event) => uploadFormSubmit(e, fileToREUP)}
             />
         </div>
     </Modal>

@@ -7,6 +7,7 @@
         filename: string,
         url: string,
         error?: string,
+        rest?: SvelteRestProps
     } = $props();
     export { url, error };
 </script>

@@ -5,12 +5,16 @@ import {
     getFilesByIdByVersionDownload,
     postDatasets,
     postDatasetsByIdByVersionRelease,
-    postFilesByIdByVersionVisualize
+    postFilesByIdByVersionVisualize,
+    putFilesByIdByVersionComplete
 } from "client";
-import type { Dataset, File as SrvFile} from "client";
+import type { Dataset, File as SrvFile, UploadPart} from "client";
 import { ajv, val } from '$lib/validate'
 import { mount } from "svelte";
 import VisualizationCard from "$lib/ui/VisualizationCard.svelte";
+import UploadCard from "$lib/ui/UploadCard.svelte";
+import { chunkSize, retries } from "$lib/config";
+import { retry } from "$lib/js/retry"
 
 
 export function extractAndValidateFile(
@@ -23,7 +27,7 @@ export function extractAndValidateFile(
         extension: ext,
         type: (formdata.get('filetype')! as string),
         size: file.size,
-        comment: (formdata.get('comment')! as string),
+        description: (formdata.get('description')! as string),
         dataset_id: +id,
         dataset_version: +version,
     }
@@ -75,6 +79,72 @@ export async function uploadChunk(chunk: Blob, url: string){
     if (response.ok){ // comes with trailing quotes
         return response.headers.get('ETag')!.replaceAll('"', '');
     }
+}
+
+
+export async function uploadFile(
+    file: File,
+    parts: Array<UploadPart>,
+    id: number,
+    version: number,
+    status_card?: UploadCard
+){
+    let i = 0;
+    let n = parts.length;
+    let progress = 0;
+    let chunks = []
+    let head = 0;
+    let parts_etags = [];
+
+    // Prepare chunks.
+    for (const part of parts){
+        if(!part.etag){
+            chunks.push(
+                {
+                    "chunk": file.slice(head, head + chunkSize),
+                    "form": part.form!,
+                    "num": part.part_number!
+                }
+            )
+        } else {
+            progress++;
+            parts_etags.push({'PartNumber': part.part_number!, 'ETag': part.etag!})
+        }
+        head += chunkSize;
+        i++;
+    }
+
+    // Prepare upload promises.
+    const promises = chunks.map(async (one) => {
+        // Declare function call
+        const fn = () => uploadChunk(one.chunk, one.form)
+        // setup retries
+        const etag = await retry(fn, retries)
+        // const etag = await uploadChunk(one.chunk, one.form);
+        return {'PartNumber': one.num, 'ETag': etag!}
+    })
+
+    if(status_card){
+        // Display progress, tying a promise on each uploadChunk call.
+        promises.forEach(p => p.then(() => {
+            progress++;
+            status_card.progress = (progress/n*100).toString()
+        }));
+    }
+
+    // Execute and merge.
+    parts_etags = parts_etags.concat(
+        await Promise.all(promises)
+    ).sort((a, b) => a.PartNumber-b.PartNumber);
+
+    // Send completion notice.
+    return putFilesByIdByVersionComplete({
+        path: {
+            id: id,
+            version: version
+        },
+        body: parts_etags
+    })
 }
 
 
@@ -149,7 +219,7 @@ export async function visualizeFile(file: SrvFile){
     let vis_card = mount(VisualizationCard, {
         target: action_bar!,
         props: {
-            id: "visualize-" + file.id,
+            id: "visualize-" + file.id?.toString(),
             class: "action-card w-fit",
             filename: file.filename + "." + file.extension,
             url: ""

@@ -29,7 +29,7 @@
                 <ProjectForm
                     bind:write_selected
                     bind:download_selected
-                    onsubmit={(e: SubmitEvent) => projectCreate(e, write_selected, download_selected)}
+                    onsubmit={(e: Event) => projectCreate(e, write_selected, download_selected)}
                 />
             </TabItem>
         </div>

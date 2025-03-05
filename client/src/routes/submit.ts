@@ -8,7 +8,7 @@ import { extractProjectPermissions } from "$lib/form";
 
 
 export function projectCreate(
-    ev: SubmitEvent,
+    ev: Event,
     download_selected: Array<string>,
     write_selected: Array<string>
 ){

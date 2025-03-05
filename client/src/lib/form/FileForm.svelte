@@ -3,6 +3,7 @@
     import { Form, AutoInput, InputContainer } from "./components"
     import { capitalizeFirstLetter } from "$lib/types/str";
     import { tick } from "svelte"
+    import type { EventHandler } from "svelte/elements";
 
     let {
         btnText = "Upload",
@@ -13,7 +14,7 @@
         btnText?: string,
         id?: string | null,
         reupFile?: srvFile,
-        onsubmit: Function
+        onsubmit: EventHandler
     } = $props();
 
     let size_form_value = $state<String>()
@@ -54,8 +55,8 @@
     <!-- <AutoInput schema={FileSchema} field="comment" value={comment_form_value}/> -->
     <!-- <AutoInput schema={FileSchema} field="comment" value={reupFile?.comment}/> -->
 
-    <InputContainer field="comment" required={false}>
-        <input class="text-black" id="comment" name="comment" type="text" value={reupFile?.comment}/>
+    <InputContainer field="description" required={false}>
+        <input class="text-black" id="description" name="description" type="text" value={reupFile?.description}/>
     </InputContainer>
 
     <InputContainer field="size" required={false}>
