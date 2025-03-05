@@ -63,7 +63,33 @@ class File(S3File, Versioned, Base):
 
     submitter_username:  Mapped[str] = mapped_column(ForeignKey("USER.username"), nullable=False) # form: submitter_name
     enabled = Column(Boolean, nullable=False, server_default='1') # TODO
-    comment = Column(String(100), nullable=True)
+    description = Column(String(200), nullable=True) # form: comment
+
+
+# from sqlalchemy import inspect, func, select
+# from sqlalchemy.orm import aliased, column_property
+
+
+# aF = aliased(File)
+# inspect(File).add_property(
+#     'is_latest',
+#     column_property(
+#         File.version == (
+#             select(func.max(aF.version)).where(aF.id == File.id).group_by(aF.id)
+#         ).scalar_subquery()
+#     )
+# )
+
+
+# aB = aliased(B)
+# inspect(B).add_property(
+#     "is_latest",
+#     column_property(
+#         B.version == (
+#             select(func.max(aB.version)).where(aB.id == B.id).group_by(aB.id)
+#         ).scalar_subquery()
+#     )
+# )
 
     # @hybrid_property
     # async def key(self) -> str:

@@ -1,5 +1,5 @@
-from marshmallow import Schema, validates_schema
-from marshmallow.fields import String, Nested, Integer, Bool, Date, List
+from marshmallow import validates_schema, Schema
+from marshmallow.fields import String, Nested, Integer, Boolean, Date#, List
 from marshmallow.validate import OneOf, Range
 from marshmallow.exceptions import ValidationError
 
@@ -22,13 +22,16 @@ class FileSchema(Schema):
     id = Integer()
     version = Integer()
 
+    # #  Versioned
+    # is_latest = Boolean(dump_only=True)
+
     # File management
     filename     = String(required=True)
     extension    = String(required=True,
                           validate=OneOf(MOL_EXTS + CLI_EXTS + ['pdf']))
     size         = Integer(required=True,
                            validate=Range(min=24, max=config.S3_FILE_SIZE_LIMIT * 1024 ** 3))
-    ready        = Bool(dump_only=True)
+    ready        = Boolean(dump_only=True)
     dl_count     = Integer(dump_only=True)
     emited_at    = Date(dump_only=True)
     validated_at = Date(dump_only=True)
@@ -36,8 +39,8 @@ class FileSchema(Schema):
     # Use case related
     type = String(required=True,
                   validate=OneOf(['molecular', 'clinical', 'licence']))
-    enabled = Bool()
-    comment = String()
+    enabled = Boolean()
+    description = String()
 
     # FK
     submitter_username = String() # auto-filled

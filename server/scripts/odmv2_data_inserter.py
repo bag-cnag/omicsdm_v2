@@ -108,7 +108,10 @@ groups = [{
             "lastName": "Smith",
         }
     ]
-},{
+}]
+
+sub_groups = [
+{
     "path": "CNAG__OMICS__T1",
 },
 {
@@ -131,8 +134,7 @@ groups = [{
 },
 {
     "path": "CRG__LS__T2",
-},
-]
+}]
 
 
 projects = [
@@ -167,35 +169,35 @@ projects = [
                     "extension": "h5ad",
                     "size": "616578898",
                     "type": "molecular",
-                    "comment": "abcd"
+                    "description": "abcd"
                 },
                 {
                     "filename": "test02",
                     "extension": "h5ad",
                     "size": "24653425",
                     "type": "molecular",
-                    "comment": "efghi"
+                    "description": "efghi"
                 },
                 {
                     "filename": "test03",
                     "extension": "csv",
                     "size": "60",
                     "type": "clinical",
-                    "comment": "lmnop"
+                    "description": "lmnop"
                 },
                 {
                     "filename": "test04",
                     "extension": "csv",
                     "size": "60",
                     "type": "clinical",
-                    "comment": "rstuv"
+                    "description": "rstuv"
                 },
                 {
                     "filename": "test05",
                     "extension": "pdf",
                     "size": "39872",
                     "type": "licence",
-                    "comment": "hjdgh"
+                    "description": "hjdgh"
                 },
             ],
             "perm_self": {
@@ -283,7 +285,7 @@ projects = [
                     "extension": "h5ad",
                     "size": "24653425",
                     "type": "molecular",
-                    "comment": "wxyz"
+                    "description": "wxyz"
                 },
             ],
             "perm_self": {
@@ -316,6 +318,15 @@ gr_response = requests.post(
 # print(gr_response.text)
 assert gr_response.status_code == 201
 
+sub_gr_response = requests.post(
+    f"{SRV_URL}/groups",
+    data=json_bytes(sub_groups),
+    headers=ADMIN_HEADER
+)
+
+assert sub_gr_response.status_code == 201
+
+
 pr_response = requests.post(
     f"{SRV_URL}/projects",
     data=json_bytes(projects),
@@ -342,5 +353,6 @@ for file in pr_json[0]['datasets'][0]['files'] + pr_json[1]['datasets'][0]['file
         data=json_bytes(parts_etags),
         headers=ADMIN_HEADER
     )
+    # print(complete.text)
     assert complete.status_code == 201
     assert 'Completed.' in complete.text
