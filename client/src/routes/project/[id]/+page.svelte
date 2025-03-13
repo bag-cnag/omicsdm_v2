@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { DatasetSchema as dsSchema, getProjectsById, type Dataset, type Project} from "client";
+    import { DatasetSchema as dsSchema, getProjectsById, type Dataset, type Project, type Tag} from "client";
     import { checkGroups, isAuthenticated, groups } from "auth";
 
     import { page } from "$app/state";
@@ -24,10 +24,10 @@
     import { listGroupToListPaths, listGroupToPreSelection } from "$lib/form/helpers";
     import { groupsForMultiselect } from "$lib/remote/groups";
     import { schemaGetProp } from "$lib/types/client/Schema";
-    import Form from "$lib/form/components/Form.svelte";
 
     import { reload } from "./table";
     import { datasetCreate, projectShare } from "./submit";
+    import DirectForm from "$lib/form/DirectForm.svelte";
 
 
     // Local context
@@ -68,6 +68,7 @@
         "short_name",
         "long_name",
         "version",
+        "tags",
         "submission_date",
         "disease",
         "treatment",
@@ -114,20 +115,27 @@
 <Tabs class="relative">
     <TabItem open title="Overview">
         <div class="md:flex md:items-center space-y-4 flex flex-wrap">
-            <img style="height:200px" src="{page_project.logo_url}" alt="logo">
-            <div class="ml-4">
-                <p>{page_project.short_name}</p><br/>
-                <p>{page_project.long_name}</p><br/>
-                <p>{page_project.description}</p><br/>
+            <!-- <div> -->
+            <img class="flex-col" style="height:200px" src="{page_project.logo_url}" alt="logo">
+            <div class="flex-col w-1/4"></div>
+            <div class="flex-col ml-4">
+                <h1>{page_project.short_name}</h1>
+                <h2>{page_project.long_name}</h2>
+                <hr class="w-full"/>
+            </div>
+            <div class="grid justify-items-center">
+                <p class="w-10/12">{page_project.description}</p><br/>
             </div>
             <hr class="w-full">
+            <!-- </div> -->
             <div id="dt-container" class="overflow-x-hidden overflow-y-hidden"
                  use:horizontallyScrollable
             >
             <Datatable {table}>
                 {#snippet header()}
-                    <div >
-                        <button id="col-sel" class="pri-btn" onclick={() => {showModal = true;}}>
+                    <div class="flex items-center">
+                        <h2 class="text-xl font-bold flex-row">Datasets</h2>
+                        <button id="col-sel" class="flex-row absolute right-1/4 pri-btn" onclick={() => {showModal = true;}}>
                             <span class="tail">
                                 <SvgColumns cclass="text-white dark:text-gray-800"/>&nbsp;Columns
                             </span>                            
@@ -160,8 +168,13 @@
                         {#each table.rows as row}
                         <tr onclick={() => {goto('/dataset/'+row.id + '_' + row.version)}}>
                             {#each dataset_fields as field}
+                                {@const value = datasetGet(row, field)}
                                 <td style={schemaGetProp((DatasetSchema), field)?.format == 'date' ? "white-space: nowrap;" : null}>
-                                    {datasetGet(row, field)}
+                                    {#if field == 'tags'}
+                                        {(value as Array<Tag>).map((t) => t.name).join(', ')}
+                                    {:else}
+                                        {value}
+                                    {/if}
                                 </td>
                             {/each}
                         </tr>
@@ -193,31 +206,23 @@
     <div class="flex absolute right-0">
         {#if checkGroups(page_project!.perm_datasets?.write)}
             <TabItem title="+New Dataset">
+                <DirectForm
+                    fClass="border-2 border-solid p-2"
+                    btnText="Send"
+                    entry="dataset"
+                />
                 <h1>Create new Dataset in project: {page_project.short_name}</h1>
-                <div class="flex flex-row">
-                    <DatasetForm
-                        onsubmit={(e) => (datasetCreate(
-                                e, +page_project!.id!,
-                                ds_read_selected, ds_write_selected, ds_download_selected
-                        ))}
-                        write_options={listGroupToListPaths(page_project!.perm_datasets?.write)}
-                        download_options={listGroupToListPaths(page_project!.perm_datasets?.download)}
-                        bind:read_selected={ds_read_selected}
-                        bind:write_selected={ds_write_selected}
-                        bind:download_selected={ds_download_selected}
-                    />
-                    <div class="w-1/5 mt-4">
-                        <Form btnText="Send" class="border-2 border-solid p-2">
-                            Or - Create from:
-                            <select id="format" name="format" onchange={()=>{}}>
-                                <option value="tsv">TSV</option>
-                                <option value="json">JSON</option>
-                            </select>
-                            <button id="dl_template_btn" class="m-2 mr-8 ml-8 pri-btn">template</button>
-                            <input type="file" id="ds_metadata_file" name="ds_metadata_file">
-                        </Form>
-                    </div>
-                </div>
+                <DatasetForm
+                    onsubmit={(e) => (datasetCreate(
+                            e, +page_project!.id!,
+                            ds_read_selected, ds_write_selected, ds_download_selected
+                    ))}
+                    write_options={listGroupToListPaths(page_project!.perm_datasets?.write)}
+                    download_options={listGroupToListPaths(page_project!.perm_datasets?.download)}
+                    bind:read_selected={ds_read_selected}
+                    bind:write_selected={ds_write_selected}
+                    bind:download_selected={ds_download_selected}
+                />
             </TabItem>
         {/if}
         {#if $isAuthenticated && $groups.includes("admin")}

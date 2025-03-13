@@ -1,0 +1,62 @@
+[
+    {
+        "project_id": 0,
+        "short_name": "string",
+        "long_name": "string",
+        "description": "string",
+        "disease": "COPD",
+        "treatment": "string",
+        "molecular_info": "string",
+        "sample_type": "string",
+        "data_type": "string",
+        "value_type": "string",
+        "platform": "string",
+        "genome_assembly": "string",
+        "annotation": "string",
+        "samples_count": 0,
+        "features_count": 0,
+        "features_id": "string",
+        "healthy_controls_included": true,
+        "additional_info": "string",
+        "contact_username": "string",
+        "tags": [
+            {
+                "name": "string"
+            }
+        ],
+        "perm_self": {
+            "read": {
+                "groups": [
+                    {
+                        "path": "string"
+                    }
+                ]
+            },
+            "download": {
+                "groups": [
+                    {
+                        "path": "string"
+                    }
+                ]
+            }
+        },
+        "perm_files": {
+            "write": {
+                "groups": [
+                    {
+                        "path": "string"
+                    }
+                ]
+            }
+        },
+        "files": [
+            {
+                "description": "string",
+                "filename": "string",
+                "extension": "tsv",
+                "size": 107374182400,
+                "type": "molecular"
+            }
+        ]
+    }
+]

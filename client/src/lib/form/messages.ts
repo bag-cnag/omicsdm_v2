@@ -14,9 +14,25 @@ export function displayFormError(err: string, parent?: string | null){
 
     const errorMessagesDiv = document.querySelector(qs + " .errorMessages");
     const errorMessage = document.createElement('p');
-    errorMessage.textContent = err;
-    errorMessage.className = "error";
-    errorMessagesDiv?.appendChild(errorMessage)
+
+
+    try { // Server validation errors special case.
+        const jsonErr = JSON.parse(err);
+        if(jsonErr.hasOwnProperty("_schema")){
+            const inner = jsonErr._schema;
+            if(inner.length == 1){
+                err = inner[0];
+            } else {
+                err = inner;
+            }
+        }
+    } catch {
+        // Supresses invalid JSON errors.
+    } finally {
+        errorMessage.textContent = err;
+        errorMessage.className = "error";
+        errorMessagesDiv?.appendChild(errorMessage)
+    }
 
     setTimeout(function () {
         errorMessagesDiv?.scrollIntoView({

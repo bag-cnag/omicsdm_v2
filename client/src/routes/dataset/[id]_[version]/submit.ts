@@ -15,6 +15,7 @@ import VisualizationCard from "$lib/ui/VisualizationCard.svelte";
 import UploadCard from "$lib/ui/UploadCard.svelte";
 import { chunkSize, retries } from "$lib/config";
 import { retry } from "$lib/js/retry"
+import { triggerDownload } from "$lib/js/utils";
 
 
 export function extractAndValidateFile(
@@ -49,12 +50,7 @@ export async function downloadFile(file: SrvFile | Partial<SrvFile>){
         }
     })
     if (response.response.ok){
-        const downloadLink = document.createElement('a')
-        downloadLink.href = response.data!
-        downloadLink.download = ""
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink)
+        triggerDownload(response.data!)
     } else {
         throw new Error(response.response.statusText)
     }
@@ -175,10 +171,9 @@ export async function datasetRelease(
         body: (data as Dataset)
     })
     if (response.response.ok){
-        // Pass through the root first to reload
-        goto('/').then(
-            () => goto("/dataset/" + response.data!.id + "_" + response.data!.version)
-        );
+        goto("/dataset/" + response.data!.id + "_" + response.data!.version).then(
+            () => window.location.reload() // Force refresh.
+        )
     } else {
         let e = new Error(response.response.statusText)
         console.error(e)

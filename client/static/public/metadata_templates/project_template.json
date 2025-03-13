@@ -1,0 +1,43 @@
+[
+    {
+        "short_name": "string",
+        "long_name": "string",
+        "description": "string",
+        "logo_url": "string",
+        "datasets": [
+            {
+                "short_name": "string",
+                "disease": "COPD",
+                "treatment": "string",
+                "molecular_info": "string",
+                "sample_type": "string",
+                "data_type": "string",
+                "value_type": "string",
+                "platform": "string",
+                "genome_assembly": "string",
+                "annotation": "string",
+                "samples_count": 0,
+                "features_count": 0,
+                "features_id": "string",
+                "healthy_controls_included": true,
+                "contact_username": "string"
+            }
+        ],
+        "perm_datasets": {
+            "write": {
+                "groups": [
+                    {
+                        "path": "string"
+                    }
+                ]
+            },
+            "download": {
+                "groups": [
+                    {
+                        "path": "string"
+                    }
+                ]
+            }
+        }
+    }
+]

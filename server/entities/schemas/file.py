@@ -22,8 +22,8 @@ class FileSchema(Schema):
     id = Integer()
     version = Integer()
 
-    # #  Versioned
-    # is_latest = Boolean(dump_only=True)
+    #  Versioned
+    is_latest = Boolean(dump_only=True)
 
     # File management
     filename     = String(required=True)

@@ -4,10 +4,11 @@
         getProjectsById, postFilesByIdByVersionRelease, deleteFilesByIdByVersion,
         FileSchema, getFiles
     } from "client";
-    import type { File as SrvFile, Dataset, Project } from "client"
-    import { checkGroups } from "auth";
+    import type { File as SrvFile, Dataset, Project, Error as SrvError } from "client"
+    import { checkGroups, user } from "auth";
 
     import { mount, onMount, unmount } from 'svelte';
+    import { get } from 'svelte/store';
     import { page } from "$app/state";
 
     import { Tabs, TabItem, Modal } from 'flowbite-svelte';
@@ -31,6 +32,8 @@
         uploadFile, downloadFile, datasetRelease,
         datasetShare, visualizeFile, extractAndValidateFile,
     } from "./submit"
+    import { goto } from "$app/navigation";
+    import DirectForm from "$lib/form/DirectForm.svelte";
 
     interface FileAndResumeCard extends SrvFile {
         card: ResumeCard
@@ -48,6 +51,7 @@
     let licence = $state<Partial<SrvFile>>();
     let last_upload = $state<Partial<SrvFile>>();
     let failed_uploads = $state<Array<Partial<FileAndResumeCard>>>([]);
+    let error = $state<string>();
 
     let prev_version = $state.raw<Dataset>()
     let next_version = $state.raw<Dataset>()
@@ -125,9 +129,14 @@
                         dataset_version: [+page_dataset!.version!],
                         fields: ['id','version', 'filename', 'extension', 'size', 'upload'],
                         ready: false,
+                        submitter_username: [get(user)]
                     }
                 }).then((res) => res.response.ok ? res.data! : [])
             }
+        } else if(response.response.status == 404) {
+            goto('404');
+        } else {
+            error = (response.error as SrvError).message;
         }
 
         // fetch adjacent versions
@@ -233,8 +242,10 @@
             } else {
                 if(response.error!.message.includes('already been released')){
                     displayFormError("Re-Uploading a File is only allowed on latest version.", form.id);
-                } else {
+                } else if (response.error!.message.includes('uc_file_in_dataset')) {
                     displayFormError("One file with this name and version already exists.", form.id);
+                } else {
+                    displayFormError(response.error!.message, form.id);
                 }
             }
         } catch(e) {
@@ -364,7 +375,8 @@
                                         <SvgEye />
                                     </button>
                                 {/if}
-                                {#if checkGroups(page_project!.perm_datasets?.write)
+                                {#if row.is_latest
+                                  && checkGroups(page_project!.perm_datasets?.write)
                                   && checkGroups(page_dataset!.perm_files?.write)}
                                     <button type="button" title="Re-Upload" class="faction"
                                         onclick={() => {
@@ -458,8 +470,15 @@
     <Modal bind:open={showFUPModal} outsideclose>
         <h2>Upload A File</h2>
 		<hr />
-        <div id="modal_content">
-            <FileForm id="file_upload_form" onsubmit={(e: Event) => uploadFormSubmit(e)}/>
+        <div id="modal_content" class="flex">
+            <FileForm class="flex-col" id="file_upload_form" onsubmit={(e: Event) => uploadFormSubmit(e)}/>
+            <!-- <DirectForm class="flex-col" onsubmit={(e: Event) => uploadFormSubmit(e)}/> -->
+            <DirectForm
+                fClass="border-2 border-solid p-2"
+                orientation="horizontal"
+                btnText="Send"
+                entry="file"
+            />
         </div>
     </Modal>
 
@@ -473,4 +492,6 @@
         </div>
     </Modal>
 </Tabs>
+{:else}
+    <p class="error">{error}</p>
 {/if}

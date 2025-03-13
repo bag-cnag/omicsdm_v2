@@ -38,12 +38,12 @@
                     reupFile ? reupFile?.filename + "." + reupFile?.extension : ""
             )}
         /> -->
-        <input id="filename" name="filename" type="text"
+        <input id="filename" name="filename" type="text" class="w-full"
             value={(reupFile ? reupFile?.filename + "." + reupFile?.extension : "")}
         />
     </InputContainer>
     <InputContainer field="file" required={true}>
-        <input class="text-white" id="file" onchange={e => FileChange(e)} name="file" type="file" />
+        <input class="text-white w-full" id="file" onchange={e => FileChange(e)} name="file" type="file" />
     </InputContainer>
     <InputContainer field="filetype" required={true}>
         <select class="border-2 border-gray-600 w-full" name="filetype" id="filetype" value={reupFile?.type}>
@@ -56,11 +56,11 @@
     <!-- <AutoInput schema={FileSchema} field="comment" value={reupFile?.comment}/> -->
 
     <InputContainer field="description" required={false}>
-        <input class="text-black" id="description" name="description" type="text" value={reupFile?.description}/>
+        <input class="text-black w-full" id="description" name="description" type="text" value={reupFile?.description}/>
     </InputContainer>
 
     <InputContainer field="size" required={false}>
-        <input id="size" class="text-stone-600" name="size" value={size_form_value} readonly type="number"/>
+        <input id="size" class="text-stone-600 w-full" name="size" value={size_form_value} readonly type="number"/>
         <!-- <input id="size" class="text-stone-600" name="size" readonly value={size_form_value} type="number"/> -->
     </InputContainer>
 </Form>

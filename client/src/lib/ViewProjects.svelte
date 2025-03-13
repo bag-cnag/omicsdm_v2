@@ -35,7 +35,7 @@
     let gprojects = fetchProjects();
 </script>
 
-<div class="flex flex-wrap -mt-2 -mr-2">
+<div class="flex flex-wrap justify-center -mt-2 -mr-2">
     {#await gprojects}
         <p>loading</p>
     {:then data}

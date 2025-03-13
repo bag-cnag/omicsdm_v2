@@ -1,4 +1,4 @@
-from marshmallow import Schema #, validate, pre_load, ValidationError
+from marshmallow import Schema
 from marshmallow.fields import String, Date, List, Nested, Integer, Boolean
 from marshmallow.validate import OneOf
 
@@ -22,6 +22,9 @@ class DatasetSchema(Schema):
     # Pk
     id              = Integer()
     version         = Integer()
+
+    #  Versioned
+    is_latest = Boolean(dump_only=True)
 
     # Classic
     short_name      = String(required=True)
@@ -54,10 +57,7 @@ class DatasetSchema(Schema):
     project = Nested(DumpProjectSchema)
     tags = List(Nested('TagSchema'))
     files = List(Nested('FileSchema'))
-    # collection = Nested('FileCollectionSchema')
 
-    # # Vers
-    # next_version = Nested('DatasetSchema', only=['id', 'version'])
 
 # gen_schema output for reference, required is just a hint
 # id <class 'int'> required: False

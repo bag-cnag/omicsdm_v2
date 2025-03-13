@@ -10,3 +10,5 @@ export { default as SvgPdf } from "./SvgPdf.svelte";
 export { default as SvgCircleCheck } from "./SvgCircleCheck.svelte";
 export { default as SvgArrowUpRight } from "./SvgArrowUpRight.svelte";
 export { default as SvgFolderArrowUp } from "./SvgFolderArrowUp.svelte";
+export { default as SvgChevronUp } from "./SvgChevronUp.svelte";
+export { default as SvgChevronDown } from "./SvgChevronDown.svelte";

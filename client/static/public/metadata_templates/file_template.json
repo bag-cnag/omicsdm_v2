@@ -1,0 +1,11 @@
+[
+    {
+        "dataset_id": 0,
+        "dataset_version": 0,
+        "description": "string",
+        "filename": "string",
+        "extension": "tsv",
+        "size": 107374182400,
+        "type": "molecular"
+    }
+]

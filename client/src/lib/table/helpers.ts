@@ -1,6 +1,7 @@
 import { schemaGetProp } from "$lib/types/client/Schema";
 import type { Filter } from "@vincjo/datatables/server";
 import { OpenAPIV3 } from "openapi-types"
+import * as Schemas from "client/schemas.gen"
 
 
 const unary_operators = ["min", "max", "min_v", "max_v", "min_a", "max_a"];
@@ -22,6 +23,14 @@ export function parseFilters(
 
             field = field.toString()
             switch (field_def?.type){
+                case "array":
+                    const nested = field_def['items']['$ref'].split('/').pop() + 'Schema';
+                    const nested_schema = Schemas[nested];
+                    const keys = Object.keys(nested_schema.properties);
+                    if(keys.length == 1){
+                        const down = parseFilters(nested_schema, [{field: keys[0], value: value}])
+                        extra_q += field + "." + down.substring(0, down.length-1);
+                    }
                 case "boolean":
                     value = (value as string).toLowerCase()
                     if(value === 'true'){

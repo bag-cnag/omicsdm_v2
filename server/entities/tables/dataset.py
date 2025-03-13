@@ -109,3 +109,18 @@ class Dataset(Versioned, Base):
         # Permission("self", read=True, download=True, propagates_to=['collection']),
         # Permission("collection", write=True)
     )
+
+
+# from sqlalchemy import inspect, func, select
+# from sqlalchemy.orm import aliased, column_property
+
+
+# aDS = aliased(Dataset)
+# inspect(Dataset).add_property(
+#     'is_latest',
+#     column_property(
+#         Dataset.version == (
+#             select(func.max(aDS.version)).where(aDS.id == Dataset.id).group_by(aDS.id)
+#         ).scalar_subquery()
+#     )
+# )

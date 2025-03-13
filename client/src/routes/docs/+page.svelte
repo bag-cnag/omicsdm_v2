@@ -43,3 +43,20 @@ While in theory date fields are supporting the same operators as numerical field
 they currently return somewhat inconsistent result.
 
 This may be fixed in a future release.
+
+
+<h2>Direct Creation</h2>
+<p>
+    If you have enough privileges to create resources, there will be a "Direct Creation" button
+    next to the relevant form.
+</p>
+<p>
+    You have the possibility to create those resources from TSV or JSON. For this, you may download
+    the associated template, fill it and click 'Verify'.
+</p>
+<p>
+    A staging view will let you review the data you want to insert, with some client side validation,
+    highliting potential mistakes.
+    This validation is not covering all the cases, for example key uniqueness on a resource (e.g. short_names).
+    In that case, upon submitting a server error will be returned and print out informations.
+</p>

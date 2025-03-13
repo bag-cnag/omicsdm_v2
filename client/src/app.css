@@ -9,8 +9,13 @@
     /* @apply text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800; */
     /* @apply text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800; */
   }
+
   .pri-btn {
     @apply text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:bg-primary-300 font-medium rounded-lg text-sm dark:bg-primary-600  dark:hover:bg-primary-700 focus:outline-none dark:focus:bg-primary-800;
+  }
+
+  .pri-btn:disabled {
+    @apply text-white bg-primary-700 font-medium rounded-lg text-sm dark:bg-primary-600 ;
   }
 
   .error {

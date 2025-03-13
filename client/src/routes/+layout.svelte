@@ -61,12 +61,11 @@
 
 
 <div class="w-full">
-	<Navbar rounded fluid={true} color="primary">
+	<Navbar rounded fluid={true} color="primary" class="mb-4">
 		<NavBrand href="/">
 		  <img src="/3TR.ico" class="me-3 h-6 sm:h-9" alt="3TR Logo" />
-		  <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">3TR</span>
+		  <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">3TR Data Warehouse</span>
 		</NavBrand>
-
 		{#if !$isAuthenticated}
 			<div class="order-2 md:order-4">
 				<Login />
@@ -86,11 +85,12 @@
 				<DropdownItem><a href="/logout" id="logout">Sign out</a></DropdownItem>
 			</Dropdown>
 		{/if}
-
-		<NavUl {activeUrl}>
-		  <NavLi href="/about">About</NavLi>
-		  <NavLi href="/docs">User Manual</NavLi>
-		</NavUl>
+		<div style="margin-left: -8rem;">
+			<NavUl {activeUrl} >
+			<NavLi class="text-lg" href="/about">About</NavLi>
+			<NavLi class="text-lg" href="/docs">User Manual</NavLi>
+			</NavUl>
+		</div>
 	  </Navbar>
 	<div class="container mx-auto">
 		{@render children()}

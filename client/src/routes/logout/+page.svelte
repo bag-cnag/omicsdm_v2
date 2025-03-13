@@ -10,11 +10,11 @@
             "body":{
                 "refresh_token": get(token).refresh_token!
             }
-        }).then(() => {
-            logout()
-            goto($lastpage)
         }).catch((error) => {
-            alert(error)
+            console.error(error);
+        }).finally(()=>{
+            logout();
+            goto($lastpage);
         })
     });
 </script>
