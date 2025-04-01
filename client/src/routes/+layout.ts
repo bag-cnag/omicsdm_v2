@@ -1,6 +1,7 @@
 export const ssr = false;
 export const csr = true;
-export const prerender = false;
+export const prerender = "auto";
+
 import { endpoint } from '$lib/config';
 import { client, getLogin, type Error } from 'client';
 import { get } from 'svelte/store'

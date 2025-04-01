@@ -28,6 +28,7 @@
     import { reload } from "./table";
     import { datasetCreate, projectShare } from "./submit";
     import DirectForm from "$lib/form/DirectForm.svelte";
+    import ThVersionFilter from "$lib/table/ThVersionFilter.svelte";
 
 
     // Local context
@@ -158,6 +159,8 @@
                                 {:else if schemaGetProp((DatasetSchema), field)?.enum}
                                     <ThEnumFilter {table} field={field as keyof Dataset} 
                                         options={(schemaGetProp((DatasetSchema), field)!.enum as string[])}/>
+                                <!-- {:else if field == 'version'}
+                                    <ThVersionFilter {table} field={field as keyof Dataset}/> -->
                                 {:else}
                                     <ThFilter {table} field={field as keyof Dataset}/>
                                 {/if}

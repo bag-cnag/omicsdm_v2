@@ -7,6 +7,7 @@
     import { isAuthenticated, user } from "auth";
 	import { page } from '$app/state'
     import Login from '../lib/Login.svelte'
+	import { Footer, FooterCopyright } from 'flowbite-svelte';
 
 	beforeNavigate((nav) => {
 		let url = ""
@@ -61,6 +62,7 @@
 
 
 <div class="w-full">
+	<!-- menu -->
 	<Navbar rounded fluid={true} color="primary" class="mb-4">
 		<NavBrand href="/">
 		  <img src="/3TR.ico" class="me-3 h-6 sm:h-9" alt="3TR Logo" />
@@ -92,7 +94,14 @@
 			</NavUl>
 		</div>
 	  </Navbar>
+
+	<!-- content -->
 	<div class="container mx-auto">
 		{@render children()}
 	</div>
+
+	<!-- footer -->
+	<footer>
+		<FooterCopyright href="/" by="CNAG" year={2025} />
+	</footer>
 </div>

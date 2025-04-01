@@ -12,7 +12,7 @@
         options: string[],
     } = $props()
 
-    const typeFilter = table.createFilter(field);
+    const filter = table.createFilter(field);
 </script>
 
 <style>
@@ -27,15 +27,26 @@
         line-height: 1em;
     }
 
-    .dt-enum-filter:invalid {
+
+    .dt-enum-filter-select {
+        background: inherit;
+        outline: none;
+        border: none;
+        border-radius: 0;
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1em;
+    }
+
+    .dt-enum-filter-select:invalid {
         color: var(--grey, #bdbdbd);
     }
 
-    .dt-enum-filter option {
+    .dt-enum-filter-select:valid {
         color: var(--font-grey, #757575);
     }
 
-    .dt-enum-filter::before::after {
+    .dt-enum-filter-select::before::after {
         box-sizing: border-box;
         border-width: 0;
         border-style: solid;
@@ -43,11 +54,11 @@
     }
 </style>
 
-<th>
-    <select required class="dt-enum-filter w-full"
+<th class="dt-enum-filter">
+    <select required class="dt-enum-filter-select w-full"
         oninput={(e) => {
-            typeFilter.value = (e.target! as HTMLSelectElement).value;
-            typeFilter.set();
+            filter.value = (e.target! as HTMLSelectElement).value;
+            filter.set();
         }}
     >
         <option selected value={""} style="color: var(--grey, #bdbdbd);">- Filter -</option>

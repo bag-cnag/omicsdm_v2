@@ -1,5 +1,5 @@
 import { postDatasets, postProjects } from "client";
-import type { Project, Dataset} from "client";
+import type { Project, Dataset, Error as SrvError} from "client";
 import { goto } from '$app/navigation';
 import { ajv, val } from '$lib/validate'
 
@@ -61,7 +61,7 @@ export function datasetCreate(
             if (response.response.ok)
                 goto("/dataset/" + response.data!.id + "_" + response.data!.version)
             else {
-                let e = new Error(response.response.statusText)
+                let e = new Error((response.error! as SrvError).message)
                 console.error(e)
                 displayFormError("Server error: "+ e.toString(), (ev.target as HTMLFormElement)!.id)
             }

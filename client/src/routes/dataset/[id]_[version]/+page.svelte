@@ -305,6 +305,12 @@
     }
 </script>
 
+<style lang="postcss">
+    .pricol {
+        color: theme('colors.primary.500');
+    }
+</style>
+
 
 {#if page_project && page_dataset} <!-- onMount succeded -->
 <Tabs class="relative">
@@ -352,11 +358,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each table.rows as row}
+                        {#each table.rows as row, i}
                         <tr>
+                            <!-- {@debug table} -->
+                            <!-- ^|v -->
                             <td>{row.description}</td>
                             <td>{row.filename}.{row.extension}</td>
-                            <td>{row.version}</td>
+                            <td>
+                                {row.version}&nbsp;
+                                <span class="pricol">
+                                    {#if table.rows.filter((e)=>e.id == row.id && e.version! < row.version!).length == 0}
+                                        ^
+                                    {:else if table.rows.filter((e)=>e.id == row.id && e.version! > row.version!).length == 0}
+                                        v
+                                    {:else}
+                                        |
+                                    {/if}
+                                </span>
+                            </td>
                             <td>{row.submitter_username}</td>
                             <td>{row.validated_at}</td>
                             <td>{row.type}</td>

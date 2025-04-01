@@ -9,13 +9,28 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			fallback: 'index.html'
+			fallback: 'index.html',
+			pages: 'build',
+			assets: 'build',
 		}),
 		alias: {
 			'client': './src/client',
 			'auth': './src/auth.ts',
 			'tsconfig': './openapi-ts.config.ts'
-		}
+		},
+		prerender: {
+			entries: [
+				'/',
+				'/about',
+				'/direct_json',
+				'/docs',
+				'/login',
+				'/logout',
+				'/project/[id]',
+				'/dataset/[id]_[version]',
+				'/[...404]'
+			],
+		},
 	}
 };
 

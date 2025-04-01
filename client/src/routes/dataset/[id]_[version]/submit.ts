@@ -8,7 +8,7 @@ import {
     postFilesByIdByVersionVisualize,
     putFilesByIdByVersionComplete
 } from "client";
-import type { Dataset, File as SrvFile, UploadPart} from "client";
+import type { Dataset, File as SrvFile, UploadPart, Error as SrvError} from "client";
 import { ajv, val } from '$lib/validate'
 import { mount } from "svelte";
 import VisualizationCard from "$lib/ui/VisualizationCard.svelte";
@@ -175,7 +175,7 @@ export async function datasetRelease(
             () => window.location.reload() // Force refresh.
         )
     } else {
-        let e = new Error(response.response.statusText)
+        let e = new Error(response.error?.message)
         console.error(e)
         displayFormError("Server error: "+ e.toString(), "release_dataset_form")
     }
@@ -201,7 +201,7 @@ export async function datasetShare(
     if (response.response.ok){
         displayFormSuccess('ok', 'share_dataset_form')
     } else {
-        let e = new Error(response.response.statusText)
+        let e = new Error((response.error! as SrvError).message)
         console.error(e)
         displayFormError("Server error: "+ e.toString(), "share_dataset_form")
     }

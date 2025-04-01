@@ -1,0 +1,5 @@
+node_modules/
+bak/
+build/
+.svelte-kit
+README.md
