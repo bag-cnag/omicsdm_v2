@@ -40,7 +40,8 @@ def BuildAndCopyMibsHere(branch, credentials,project_folder,content) {
 pipeline {
     // agent any
     agent {
-        docker { image 'node:23-alpine' }
+        // docker { image 'node:23-alpine' }
+        any { image 'node:23-alpine' }
     }
     // environment {
     //     NODE_VERSION=
