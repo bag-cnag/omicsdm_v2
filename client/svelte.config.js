@@ -1,5 +1,6 @@
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import path from "path";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -14,9 +15,9 @@ const config = {
 			assets: 'build',
 		}),
 		alias: {
-			'client': './src/client',
-			'auth': './src/auth.ts',
-			'tsconfig': './openapi-ts.config.ts'
+			'client': path.resolve("./src/client"), // './src/client',
+			'auth': path.resolve("./src/auth.ts"), // './src/auth.ts',
+			'tsconfig': path.resolve("./openapi-ts.config.ts"), //'./openapi-ts.config.ts'
 		},
 		prerender: {
 			entries: [
