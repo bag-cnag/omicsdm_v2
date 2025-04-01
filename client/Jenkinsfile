@@ -53,7 +53,13 @@ pipeline {
         stage('npm install') {
             steps {
                 // nodejs(nodeJSInstallationName: 'nodejs23_1_0') {
-                sh 'npm install'
+                // sh 'npm install'
+                sh '''
+                    cd ./client
+                    rm -rf ./node_modules/*
+                    npm install
+                    cd -
+                '''
                 // }
             }
         }
