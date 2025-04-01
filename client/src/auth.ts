@@ -1,7 +1,7 @@
 import { writable, get } from "svelte/store";
 import { persisted } from 'svelte-persisted-store'
 import { browser } from "$app/environment"
-import { type GetSynAckResponse, type ListGroup, postRefresh } from './client';
+import { type GetSynAckResponse, type ListGroup, postRefresh } from 'client';
 
 
 export const isAuthenticated = persisted<boolean>('ls_isAuthenticated', false);
