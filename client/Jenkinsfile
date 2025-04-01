@@ -60,10 +60,16 @@ pipeline {
         stage('npm build') {
             steps {
                 // nodejs(nodeJSInstallationName: 'nodejs23_1_0') {
-                sh 'rm -rf ./client/build/*'
-                sh 'cd ./client'
-                sh 'npm run build'
-                sh 'cd -'
+                sh '''
+                    cd ./client
+                    rm -rf ./build/*
+                    npm run build
+                    cd -
+                '''
+                // sh 'rm -rf ./client/build/*'
+                // sh 'cd ./client'
+                // sh 'npm run build'
+                // sh 'cd -'
                 // }
             }
         }
