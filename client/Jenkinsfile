@@ -80,8 +80,8 @@ pipeline {
         //     }
         // }
         stage('build') {
-            dir('./client'){
-                steps {
+            steps {
+                dir('./client'){
                     sh 'rm -rf ./node_modules/*'
                     sh 'npm install'
                     sh 'rm -rf ./build/*'
