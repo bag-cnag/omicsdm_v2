@@ -41,7 +41,7 @@ pipeline {
     // agent any
     agent {
         // docker { image 'node:23-alpine' }
-        any { image 'node:23-alpine' } // -alpine
+        any { image 'node:23-alpine' }
     }
     // environment {
     //     NODE_VERSION=
@@ -80,15 +80,13 @@ pipeline {
         //     }
         // }
         stage('build') {
-            steps {
-                sh '''
-                    cd ./client
-                    rm -rf ./node_modules/*
-                    npm install
-                    rm -rf ./build/*
-                    npm run build
-                    cd -
-                '''
+            dir('./client'){
+                steps {
+                    sh 'rm -rf ./node_modules/*'
+                    sh 'npm install'
+                    sh 'rm -rf ./build/*'
+                    sh 'npm run build'
+                }
             }
         }
     }
