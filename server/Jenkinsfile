@@ -64,7 +64,7 @@ pipeline {
         }
         stage('inject config'){
             steps {
-                getConfigFromGitea(env.BRANCH_NAME, "gitea_apapakon_token", "omicsdm-v2_server_config")
+                getConfigFromGitea("master", "gitea_apapakon_token", "omicsdm-v2_server_config")
             }
         }
         // stage('build wheel'){
