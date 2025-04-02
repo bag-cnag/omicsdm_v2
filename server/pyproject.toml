@@ -26,3 +26,4 @@ packages = ["entities", "manifests"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+version = {attr = "__version__"}

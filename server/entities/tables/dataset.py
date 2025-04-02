@@ -83,8 +83,12 @@ class Dataset(Versioned, Base):
     contact_username:   Mapped[str] = mapped_column(ForeignKey("USER.username"), nullable=False)
 
     # relationships
-    project:  Mapped["Project"]    = relationship(back_populates="datasets")
-    tags:     Mapped[Set["Tag"]]     = relationship(secondary=asso_dataset_tag,     uselist=True) # Formerly, list of string
+    project:  Mapped["Project"]      = relationship(back_populates="datasets")
+    tags:     Mapped[List["Tag"]]     = relationship(
+        secondary=asso_dataset_tag,
+        uselist=True,
+        cascade="save-update, merge, expunge, refresh-expire",
+    )
     files:    Mapped[List["File"]]   = relationship(back_populates="dataset", cascade="all,delete")
     # files:    Mapped[List["File"]]   = relationship(back_populates="datasets", secondary=asso_dataset_file, uselist=True, cascade="all,delete")
     # collection: Mapped["FileCollection"] = relationship(back_populates="dataset")

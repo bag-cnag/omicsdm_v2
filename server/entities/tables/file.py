@@ -38,7 +38,6 @@ class File(S3File, Versioned, Base):
     # clinical/molecular/licence
     type: Mapped[str] = mapped_column(String(9), nullable=False) # added
 
-    # TODO [prio: important]: releasing put all files in last version
     dataset_id      = Column(Integer, nullable=False)
     dataset_version = Column(Integer, nullable=False)
 

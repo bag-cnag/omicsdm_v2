@@ -1,0 +1,118 @@
+def getConfigFromGitea(branch, credentials, project_folder) {
+    sh "rm -r -f " + project_folder
+    withCredentials([string(credentialsId: credentials, variable: 'gitea_token')]) {
+        sh "git clone -c http.sslVerify=false -b " + "develop" + " https://" + gitea_token + ":x-oauth-basic@gitea.gpapdev.cnag.eu/gitea/ejodry/" + project_folder
+        sh "cd " + project_folder + " && git fetch --all"
+
+        try {
+            sh "cd " + project_folder + " && git checkout -b " + branch
+        }
+        catch(Exception e1) {
+            sh "cd " + project_folder + " && git checkout  " + branch
+            println(e1);
+        }       
+        try {
+            sh "cd " + project_folder + " && git pull origin " + branch 
+        }
+        catch(Exception e1) {
+            println(e1);
+        }
+
+        // Remove .env file
+        sh "rm -f ./server/.env"
+        // Replace by the one stored in gitea
+        sh "cp -r " + project_folder + "/.env ./server/.env"
+    }
+}
+
+def BuildAndCopyMibsHere(branch, credentials, project_folder, content) {
+    sh "rm -r -f " + project_folder
+    withCredentials([string(credentialsId: credentials, variable: 'gitea_token')]) {
+        // some block  
+        sh "git clone -c http.sslVerify=false -b " + "develop" + " https://" + gitea_token + ":x-oauth-basic@gitea.gpapdev.cnag.eu/gitea/ejodry/" + project_folder + " " + project_folder
+        sh "cd " + project_folder + " && git fetch --all"
+
+        try {
+            sh "cd " + project_folder + " && git checkout -b " + branch
+        } catch(Exception e) {
+            sh "cd " + project_folder + " && git checkout  " + branch
+            println(e);
+        }
+  
+        try {
+            sh "cd " + project_folder + " && git pull origin " + branch 
+        } catch(Exception e) {
+            println(e);
+        }
+
+        sh "cp " + content + " " + project_folder + "/."
+        sh "cd " + project_folder + " && if [ \$(git status --porcelain | wc -l) -gt 0 ]; then git add * && git commit -m 'Latest build' -i * && git push origin " + branch + "; else echo 'No changes to commit'; fi"
+    }
+}
+
+pipeline {
+    agent any
+    stages {
+        stage('install requirements') {
+            steps {
+                withPythonEnv('python3') {
+                    sh 'pip install pip==23.2.1'
+                    sh 'pip3 install git+https://github.com/bag-cnag/biodm'
+                    sh 'pip install -r ./server/requirements.txt'
+                }
+            }
+        }
+        stage('inject config'){
+            steps {
+                getConfigFromGitea(env.BRANCH_NAME, "gitea_apapakon_token", "omicsdm-v2_server_config")
+            }
+        }
+        // stage('build wheel'){
+        //     steps{
+        //         withPythonEnv('python3') {
+        //             dir('./server'){
+        //                 sh 'rm -rf ./wheel'
+        //                 sh 'pip wheel . -w wheel/'
+        //                 // This to install from wheels
+        //                 // pip3 install --find-links=./wheel ./wheel/omicsdm_server_v2-0.0.0-py3-none-any.whl
+        //             }
+        //         }
+        //     }
+        // }
+        // stage('run test') {
+        //     steps {
+        //         withPythonEnv('python3'){
+        //             withCredentials([string(credentialsId: 'gitea_apapakon_token', variable: 'gitea_token')]) {
+        //                 sh 'docker rm -f ' + '$(docker ps -aqf "name=postgres_test_nextgpap_flask") || true'
+        //                 sh 'docker run --net=host --rm --name postgres_test_nextgpap_flask -e POSTGRES_PASSWORD=mysecretpassword -d rdregistry1.rd-connect.eu:5000/postgres:11-alpine'
+        //                 sh 'docker ps'
+        //                 sh "rm -rf v2_server_config"
+        //                 getConfigFromGitea(env.BRANCH_NAME, "gitea_apapakon_token", "omicsdm-v2_server_config")
+        //             }
+        //         }
+        //     }
+        // }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: '*.*', fingerprint: true
+        }
+
+        success {
+            withPythonEnv('python3') {
+                sh 'rm -f omicsdm-v2_server.tgz'
+                sh 'tar -zcvf omicsdm-v2_server.tgz --exclude=__pycache__ --exclude=.env --exclude=scripts/* --exclude=docker/* --exclude=keycloak/* --exclude=*.yml server'
+                BuildAndCopyMibsHere(env.BRANCH_NAME, 'gitea_apapakon_token', 'omicsdm-v2_server_artifact', 'omicsdm-v2_server.tgz')
+            }
+            slackSend color: "good", message: "Job: ${env.JOB_NAME} with buildnumber ${env.BUILD_NUMBER} was successful"
+        }
+
+        failure {
+            script {
+                // sh 'docker rm -f ' + '$(docker ps -aqf "name=postgres_test_nextgpap_flask") || true'
+                slackSend color: "danger", message: "Job: ${env.JOB_NAME} with buildnumber ${env.BUILD_NUMBER} was failed"
+            }
+        }
+    }
+}

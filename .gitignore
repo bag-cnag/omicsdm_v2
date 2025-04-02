@@ -14,6 +14,8 @@ build/
 dist/
 *.egg-info/
 docs/biodm/
+*.tgz
+wheel/
 
 # Internal
 *.cnag*
@@ -22,7 +24,7 @@ docs/biodm/
 server/scripts/cxg_on_k8
 
 # Client
-client/src/client
+# client/src/client
 
 # Dependency directories
 client/node_modules/
