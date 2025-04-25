@@ -25,6 +25,13 @@ npm run dev
 npm run dev -- --open
 ```
 
+### Config
+
+For deployment purposes, the config object is a json file `config.json` lying in the `src/static` folder.
+When needing a config parameter, you can import the `store` defined in `src/config.ts`. 
+
+However, since that store is set in the top `+layout.ts`, svelte offers no guarantee it will be before things in `src/lib` are imported. To work with it in those files, it is preferable to go through the `window.config` object set in `app.html`.
+
 ## Building
 
 To create a production version of your app:
@@ -36,3 +43,14 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+### Deployment
+
+To prepare for the build pipeline in Jenkinsfile, it is recommended to get a static version of the
+schema from a running server:
+
+```
+curl ${SRV}/schema -o schema.json
+```
+
+Then you should set it as input in the `openapi-ts.config.ts` file.

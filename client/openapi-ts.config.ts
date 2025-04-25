@@ -1,10 +1,12 @@
 import { defineConfig } from '@hey-api/openapi-ts';
-import { endpoint } from './src/lib/config'
+
+
 
 export default defineConfig({
   client: '@hey-api/client-fetch',
   input:
-    endpoint + '/schema',
+    (await import('./static/config.json')).endpoint + '/schema',
+    // "./schema.json",
   output: {
     format: 'prettier',
     lint: 'eslint',
@@ -14,16 +16,6 @@ export default defineConfig({
   plugins: [
     '@hey-api/schemas',
     '@hey-api/services',
-    // '@tanstack/svelte-query',
-    // 'zod'
-    // {
-    //   dates: true,
-    //   name: '@hey-api/transformers',
-    // },
-    // {
-    //   enums: 'javascript',
-    //   name: '@hey-api/types',
-    // },
   ],
 });
 // npx @hey-api/openapi-ts

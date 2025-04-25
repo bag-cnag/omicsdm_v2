@@ -1,0 +1,5 @@
+{
+    "endpoint": "http://localhost:8001",
+    "retries": 3,
+    "chunkSize": 104857600
+}

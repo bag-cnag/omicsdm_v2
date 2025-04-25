@@ -15,9 +15,10 @@ const config = {
 			assets: 'build',
 		}),
 		alias: {
-			'client': path.resolve("./src/client"), // './src/client',
-			'auth': path.resolve("./src/auth.ts"), // './src/auth.ts',
-			'tsconfig': path.resolve("./openapi-ts.config.ts"), //'./openapi-ts.config.ts'
+			'client': path.resolve("src/client"), // './src/client',
+			'config': path.resolve("src/config.ts"), // './src/config.ts',
+			'auth': path.resolve("src/auth.ts"), // './src/auth.ts',
+			'tsconfig': path.resolve("openapi-ts.config.ts"), //'./openapi-ts.config.ts'
 		},
 		prerender: {
 			entries: [

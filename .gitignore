@@ -22,15 +22,19 @@ wheel/
 
 # Server
 server/scripts/cxg_on_k8
+*.pem
 
 # Client
-# client/src/client
+client/src/client
 
 # Dependency directories
 client/node_modules/
 
 # Sveltekit outdir
 client/.svelte-kit
+
+# Gen
+
 
 # Optional eslint cache
 .eslintcache

@@ -23,7 +23,7 @@
     import { clearFormErrors, displayFormError } from '$lib/form/messages'
     import { listGroupToListPaths, listGroupToPreSelection } from "$lib/form/helpers";
     import { groupsForMultiselect } from "$lib/remote/groups";
-    import { chunkSize } from "$lib/config";
+    import config from 'config';
     import { ResumeCard, UploadCard }  from "$lib/ui";
 
     import { reload } from "./table";
@@ -425,7 +425,7 @@
         </div>
         <div id="action-bar" bind:this={action_bar} class="border-2 mt-5 min-h-4 inline-flex overflow-x-visible">
             {#each failed_uploads as failed_up}
-                {@const n = Math.ceil(failed_up.size! / chunkSize)}
+                {@const n = Math.ceil(failed_up.size! / get(config).chunkSize)}
                 {@const progress = (failed_up.upload!.parts!.filter((v)=>v.etag).length / n)*100}
                 <ResumeCard
                     bind:this={failed_up.card}

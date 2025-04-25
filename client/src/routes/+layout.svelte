@@ -1,14 +1,21 @@
 <script lang="ts">
 	import '../app.css';
+
+	import { beforeNavigate } from '$app/navigation';
+	import { page } from '$app/state'
+	import { get } from "svelte/store";
+
+	import { isAuthenticated, user, lastpage } from "auth";
+    import Login from '$lib/Login.svelte'
+	import config from 'config';
+	import { client } from 'client';
+
+	import { FooterCopyright, Navbar, NavBrand, NavLi, NavUl, NavHamburger,
+			 Avatar, DropdownHeader, DropdownItem, Dropdown } from 'flowbite-svelte';
+
 	let { children } = $props();
 
-	import { lastpage } from '../auth';
-	import { beforeNavigate } from '$app/navigation';
-    import { isAuthenticated, user } from "auth";
-	import { page } from '$app/state'
-    import Login from '../lib/Login.svelte'
-	import { Footer, FooterCopyright } from 'flowbite-svelte';
-
+	// Track last visited page
 	beforeNavigate((nav) => {
 		let url = ""
 		if(!nav.from || !nav.from.url){
@@ -19,36 +26,14 @@
 		lastpage.set(url);
 	});
 
-	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Avatar, DropdownHeader, DropdownDivider, DropdownItem, Dropdown } from 'flowbite-svelte';
-
 	let activeUrl = $state<string>();
 	$effect(() => { activeUrl = page.url.pathname; })
+
+	// Set server url for codegen fetch client.
+	client.setConfig({
+		baseUrl: get(config).endpoint,
+	});
 </script>
-
-<!-- <style>
-	.active-link {
-		@apply: 
-	}
-
-	.other-link {
-
-	}
-</style> -->
-
-<!-- <div class="flex">
-	<Nav />
-
-	<div class="card right flex-auto">
-		{#if !$isAuthenticated}
-		<Login />
-		{:else}
-		<span>Welcome {$user}</span><br/>
-		<span>
-			<a href="/logout">Log out</a>
-		</span>
-		{/if}
-	</div>
-</div> -->
 
 <style>
 	#logout::after {

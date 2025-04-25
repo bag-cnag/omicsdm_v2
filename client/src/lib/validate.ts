@@ -1,19 +1,17 @@
 import Ajv from "ajv-draft-04"
 import addFormats from "ajv-formats"
-import { endpoint } from './config'
 
 // Load API Schema
-const OpenAPISchema = (await ((await fetch(endpoint + '/schema')).json())) 
+const OpenAPISchema = (await ((await fetch(window.config.endpoint + '/schema')).json()))
+// Schemas base path
 const identifier = "API.json";
+const sbp = identifier + "#/components/schemas/"
 
+
+// Declare and configure ajv object
 export const ajv = new Ajv({strict: false, allErrors: true, coerceTypes: true, verbose: true})
 addFormats(ajv)
-
 ajv.addSchema(OpenAPISchema, identifier)
-
-
-// Schemas base path
-const sbp = identifier + "#/components/schemas/"
 
 
 function computeRef(id: string){

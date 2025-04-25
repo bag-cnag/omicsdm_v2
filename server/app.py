@@ -34,6 +34,10 @@ if __name__ == "__main__":
         host=config.SERVER_HOST,
         port=config.SERVER_PORT,
         loop=loop,
+        proxy_headers=True,
+        forwarded_allow_ips='*',
+        # ssl_keyfile="./localhost+4-key.pem",
+        # ssl_certfile="./localhost+4.pem",
         log_level="debug", # or "info"
         access_log=False
     )

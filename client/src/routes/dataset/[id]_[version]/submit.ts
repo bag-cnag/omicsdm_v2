@@ -1,4 +1,8 @@
 import { goto } from "$app/navigation";
+import { mount } from "svelte";
+import { get } from "svelte/store";
+
+
 import { extractDatasetPermissions, fieldsToObject } from "$lib/form";
 import { clearFormErrors, displayFormError, displayFormSuccess } from "$lib/form/messages";
 import { 
@@ -9,13 +13,15 @@ import {
     putFilesByIdByVersionComplete
 } from "client";
 import type { Dataset, File as SrvFile, UploadPart, Error as SrvError} from "client";
+
 import { ajv, val } from '$lib/validate'
-import { mount } from "svelte";
 import VisualizationCard from "$lib/ui/VisualizationCard.svelte";
 import UploadCard from "$lib/ui/UploadCard.svelte";
-import { chunkSize, retries } from "$lib/config";
 import { retry } from "$lib/js/retry"
 import { triggerDownload } from "$lib/js/utils";
+
+
+import config from 'config';
 
 
 export function extractAndValidateFile(
@@ -97,7 +103,7 @@ export async function uploadFile(
         if(!part.etag){
             chunks.push(
                 {
-                    "chunk": file.slice(head, head + chunkSize),
+                    "chunk": file.slice(head, head + get(config).chunkSize),
                     "form": part.form!,
                     "num": part.part_number!
                 }
@@ -106,7 +112,7 @@ export async function uploadFile(
             progress++;
             parts_etags.push({'PartNumber': part.part_number!, 'ETag': part.etag!})
         }
-        head += chunkSize;
+        head += get(config).chunkSize;
         i++;
     }
 
@@ -115,8 +121,7 @@ export async function uploadFile(
         // Declare function call
         const fn = () => uploadChunk(one.chunk, one.form)
         // setup retries
-        const etag = await retry(fn, retries)
-        // const etag = await uploadChunk(one.chunk, one.form);
+        const etag = await retry(fn, get(config).retries);
         return {'PartNumber': one.num, 'ETag': etag!}
     })
 

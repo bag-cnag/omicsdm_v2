@@ -1,5 +1,13 @@
+src/
 node_modules/
 bak/
-build/
+static/
 .svelte-kit
 README.md
+
+.env
+Jenkinsfile
+package.json
+package-lock.json
+vite.config.ts
+tsconfig.json

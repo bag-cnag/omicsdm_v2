@@ -3,7 +3,7 @@ Holds sources for the version 2 of Omics Data Management platform
 
 ## Run Server
 
-### Environment
+### Python Environment
 
 ```sh
 cd server/
@@ -16,8 +16,12 @@ pip3 install -r requirements.txt
 ### Dependencies
 
 ```sh
-docker compose up -d
+docker compose up --build -d
 ```
+
+### Configuration
+
+Populate `server/.env` file with desired configuration.
 
 ### Run
 
@@ -28,15 +32,34 @@ run manually
 python3 app.py 
 ```
 
+Warning: You should run the python it in the immediate directory of `app.py` so that `.env` is accounted for.
+
 ## Run Client
 
-This step assumes you are using `nvm`
-
-Client is developped using node `v23.1.0`
+Client is developped using node `v23.1.0`, assuming you're using nvm you should preface with
+this command.
 
 ```sh
 cd client/
 nvm use 23
 npm install
+```
+
+### Configuration
+
+You should populate `client/static/config.json` with appropriate configuration, in partocular your server endpoint.
+
+### Fetch client
+
+Once your server is running and configuration is populated, you should run the following command
+in order to generate a type safe client based on the OpenAPI description of the server.
+
+```sh
+npx @hey-api/openapi-ts
+```
+
+### Run
+
+```sh
 npm run dev
 ```

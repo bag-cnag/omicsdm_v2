@@ -2,21 +2,24 @@ export const ssr = false;
 export const csr = true;
 export const prerender = "auto";
 
-import { endpoint } from '$lib/config';
+
 import { client, getLogin, type Error } from 'client';
-import { get } from 'svelte/store'
 import { refresh, token, expires } from 'auth';
 import { isEmpty } from '$lib/types/obj';
+import { get } from "svelte/store";
+import type { LayoutLoad } from './$types';
+import { setConfig } from 'config';
 
 
-// Set server url
-client.setConfig({
-    baseUrl: endpoint,
-});
+export const load: LayoutLoad = async () => {
+	if (typeof window !== 'undefined') {
+        setConfig(window.config);
+    }
+};
 
 
 // Set token middleware
-client.interceptors.request.use(async (request, options) => {
+client.interceptors.request.use(async (request) => {
     if (!isEmpty(get(token))){
         if(Date.now() > get(expires)) // refresh token
             await refresh()
@@ -27,7 +30,7 @@ client.interceptors.request.use(async (request, options) => {
 
 
 // Redirect to login in case it is required
-client.interceptors.response.use(async (response, request, options) => {
+client.interceptors.response.use(async (response) => {
     if (response.status == 511 && window.location.href !== window.location.origin + '/'){
         const url = (await getLogin({ // TODO: use store if possible.
             query: {

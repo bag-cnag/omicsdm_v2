@@ -4,7 +4,6 @@
     import { TabItem, Tabs } from 'flowbite-svelte';
     import { ProjectForm } from '$lib/form';
     import { projectCreate } from './submit';
-    import { goto } from '$app/navigation';
     import DirectForm from '$lib/form/DirectForm.svelte';
 
     let write_selected: Array<string> = [];
