@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { base } from '$app/paths';
+
     import type { Dataset, Project, File as SrvFile } from "client";
 
     import { SvgArrowRight, SvgArrowLeft, SvgPdf, SvgFolderArrowUp } from "$lib/icons";
-    import { downloadFile } from "./submit";
-
     import { toTitle } from "$lib/types/str";
     import { datasetGet } from "$lib/types/client/Dataset";
+
+    import { downloadFile } from "./submit";
     import { checkGroups } from "auth";
 
     let {
@@ -26,7 +28,8 @@
 
     const bio_fields = [
         "submitter_username",
-        "contact_username",
+        // "contact_username",
+        "contact_email",
         "disease",
         "treatment",
         "molecular_info",
@@ -90,18 +93,18 @@
     <div class="cartouche flex flex-col -mt-5 -mb-5 w-1/3">
             <h3 class="text-gray-500 dark:text-gray-400 mt-2 ml-2">Links</h3>
 
-            <a href={"/project/"+ project.id} class="link-btn mt-4 nav-link">
+            <a href={base + "/project/"+ project.id} class="link-btn mt-4 nav-link">
                 Project<div class="float-right"><SvgFolderArrowUp cclass="text-white dark:text-gray-800"/></div>
             </a>
 
             {#if prev}
-                <a data-sveltekit-reload href={"/dataset/" + prev.id + "_" + prev.version} class="link-btn nav-link">
+                <a data-sveltekit-reload href={base + "/dataset/" + prev.id + "_" + prev.version} class="link-btn nav-link">
                   Previous version<div class="float-right"><SvgArrowLeft cclass="text-white dark:text-gray-800"/></div>
                 </a>
             {/if}
 
             {#if next}
-                <a data-sveltekit-reload href={"/dataset/" + next.id + "_" + next.version} class="link-btn nav-link">
+                <a data-sveltekit-reload href={base + "/dataset/" + next.id + "_" + next.version} class="link-btn nav-link">
                     Next version<div class="float-right"><SvgArrowRight cclass="text-white dark:text-gray-800"/></div>
                 </a>
             {/if}

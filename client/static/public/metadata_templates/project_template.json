@@ -20,7 +20,7 @@
                 "features_count": 0,
                 "features_id": "string",
                 "healthy_controls_included": true,
-                "contact_username": "string"
+                "contact_email": "string"
             }
         ],
         "perm_datasets": {

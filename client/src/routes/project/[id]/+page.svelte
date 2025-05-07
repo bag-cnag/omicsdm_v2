@@ -2,6 +2,7 @@
     import { DatasetSchema as dsSchema, getProjectsById, type Dataset, type Project, type Tag} from "client";
     import { checkGroups, isAuthenticated, groups } from "auth";
 
+	import { base } from '$app/paths';
     import { page } from "$app/state";
     import { goto } from '$app/navigation';
     import { onMount } from "svelte";
@@ -61,7 +62,7 @@
                 pr_download_selected = listGroupToPreSelection(page_project!.perm_datasets?.download, all_groups);
             }
         } else {
-            goto('/');
+            goto(base + '/');
         }
     })
 
@@ -169,7 +170,7 @@
                     </thead>
                     <tbody>
                         {#each table.rows as row}
-                        <tr onclick={() => {goto('/dataset/'+row.id + '_' + row.version)}}>
+                        <tr onclick={() => {goto(base + '/dataset/'+ row.id + '_' + row.version)}}>
                             {#each dataset_fields as field}
                                 {@const value = datasetGet(row, field)}
                                 <td style={schemaGetProp((DatasetSchema), field)?.format == 'date' ? "white-space: nowrap;" : null}>

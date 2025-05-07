@@ -196,10 +196,6 @@ class Dataset(db.Model):
 
 
 class File(db.Model):
-
-class File(db.Model):
-
-class File(db.Model):
     """
     Schema and functions for the table files
     - id = autoincremented integer

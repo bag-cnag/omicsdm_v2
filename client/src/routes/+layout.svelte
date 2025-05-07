@@ -3,6 +3,7 @@
 
 	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state'
+	import { base } from '$app/paths';
 	import { get } from "svelte/store";
 
 	import { isAuthenticated, user, lastpage } from "auth";
@@ -45,12 +46,15 @@
 	}
 </style>
 
+<svelte:head>
+	<link rel="icon" href={base + "/3TR.ico"} type="image/x-icon" />
+</svelte:head>
 
 <div class="w-full">
 	<!-- menu -->
 	<Navbar rounded fluid={true} color="primary" class="mb-4">
-		<NavBrand href="/">
-		  <img src="/3TR.ico" class="me-3 h-6 sm:h-9" alt="3TR Logo" />
+		<NavBrand href={base + "/"}>
+		  <img class="me-3 h-6 sm:h-9" alt="3TR Logo" src={base + "/3TR.ico"}/>
 		  <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">3TR Data Warehouse</span>
 		</NavBrand>
 		{#if !$isAuthenticated}
@@ -69,13 +73,13 @@
 				<!-- <span class="block truncate text-sm font-medium">name@flowbite.com</span> -->
 				</DropdownHeader>
 				<!-- <DropdownDivider /> -->
-				<DropdownItem><a href="/logout" id="logout">Sign out</a></DropdownItem>
+				<DropdownItem><a href={base + "/logout"} id="logout">Sign out</a></DropdownItem>
 			</Dropdown>
 		{/if}
 		<div style="margin-left: -8rem;">
 			<NavUl {activeUrl} >
-			<NavLi class="text-lg" href="/about">About</NavLi>
-			<NavLi class="text-lg" href="/docs">User Manual</NavLi>
+			<NavLi class="text-lg" href={base + "/about"}>About</NavLi>
+			<NavLi class="text-lg" href={base + "/docs"}>User Manual</NavLi>
 			</NavUl>
 		</div>
 	  </Navbar>
@@ -87,6 +91,6 @@
 
 	<!-- footer -->
 	<footer>
-		<FooterCopyright href="/" by="CNAG" year={2025} />
+		<FooterCopyright href={base + "/"} by="CNAG" year={2025} />
 	</footer>
 </div>

@@ -1,6 +1,8 @@
 export const ssr = false;
 export const csr = true;
-export const prerender = "auto";
+// export const prerender = "auto";
+export const prerender = true;
+
 
 
 import { client, getLogin, type Error } from 'client';
@@ -9,6 +11,7 @@ import { isEmpty } from '$lib/types/obj';
 import { get } from "svelte/store";
 import type { LayoutLoad } from './$types';
 import { setConfig } from 'config';
+import { base } from '$app/paths';
 
 
 export const load: LayoutLoad = async () => {
@@ -31,10 +34,10 @@ client.interceptors.request.use(async (request) => {
 
 // Redirect to login in case it is required
 client.interceptors.response.use(async (response) => {
-    if (response.status == 511 && window.location.href !== window.location.origin + '/'){
+    if (response.status == 511 && window.location.href !== window.location.origin + base + '/'){
         const url = (await getLogin({ // TODO: use store if possible.
             query: {
-              redirect_uri: window.location.origin + "/login"
+              redirect_uri: window.location.origin + base + "/login"
             }
         })).data;
         const content: Error = await response.clone().json()

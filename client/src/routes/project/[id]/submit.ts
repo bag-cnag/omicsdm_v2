@@ -1,6 +1,8 @@
+import { goto } from '$app/navigation';
+import { base } from '$app/paths';
+
 import { postDatasets, postProjects } from "client";
 import type { Project, Dataset, Error as SrvError} from "client";
-import { goto } from '$app/navigation';
 import { ajv, val } from '$lib/validate'
 
 import { fieldsToObject } from "$lib/form/fieldsToObject";
@@ -59,7 +61,7 @@ export function datasetCreate(
     else {
         postDatasets({body: (data as Dataset)}).then((response) => {
             if (response.response.ok)
-                goto("/dataset/" + response.data!.id + "_" + response.data!.version)
+                goto(base + "/dataset/" + response.data!.id + "_" + response.data!.version)
             else {
                 let e = new Error((response.error! as SrvError).message)
                 console.error(e)

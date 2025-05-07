@@ -1,4 +1,5 @@
 import { goto } from "$app/navigation";
+import { base } from "$app/paths";
 import { mount } from "svelte";
 import { get } from "svelte/store";
 
@@ -176,7 +177,7 @@ export async function datasetRelease(
         body: (data as Dataset)
     })
     if (response.response.ok){
-        goto("/dataset/" + response.data!.id + "_" + response.data!.version).then(
+        goto(base + "/dataset/" + response.data!.id + "_" + response.data!.version).then(
             () => window.location.reload() // Force refresh.
         )
     } else {

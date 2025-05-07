@@ -1,8 +1,7 @@
 <script lang="ts">
     import { Form } from "./components"
-    import type { EventHandler } from "svelte/elements";
-    import { Button } from 'flowbite-svelte';
     import { SvgChevronUp, SvgChevronDown, SvgDownload } from '$lib/icons';
+	import { base } from '$app/paths';
 
     let {
         btnText = "Submit",
@@ -20,7 +19,7 @@
         rest?: SvelteRestProps
     } = $props();
 
-    const template_prefix = "/public/metadata_templates/";
+    const template_prefix = "./public/metadata_templates/";
     let display = $state<boolean>(false);
     let template_path = $state<string>(template_prefix + entry + "_template.csv");
 
@@ -54,7 +53,7 @@
                 }));
             };
             reader.readAsDataURL(file);
-            window.location.href = window.location.origin + "/direct_json"
+            window.location.href = window.location.origin + base + "/direct_json"
         }
     }
 

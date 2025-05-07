@@ -80,7 +80,8 @@ class Dataset(Versioned, Base):
     # Foreign keys
     project_id:         Mapped[int] = mapped_column(ForeignKey("PROJECT.id"),    nullable=False)
     submitter_username: Mapped[str] = mapped_column(ForeignKey("USER.username"), nullable=False)
-    contact_username:   Mapped[str] = mapped_column(ForeignKey("USER.username"), nullable=False)
+    # contact_username:   Mapped[str] = mapped_column(ForeignKey("USER.username"), nullable=False)s
+    contact_email:   Mapped[str] = mapped_column(String, nullable=False) # TODO # form: contact
 
     # relationships
     project:  Mapped["Project"]      = relationship(back_populates="datasets")

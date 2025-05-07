@@ -1,5 +1,5 @@
 from marshmallow import Schema
-from marshmallow.fields import String, Date, List, Nested, Integer, Boolean
+from marshmallow.fields import String, Date, List, Nested, Integer, Boolean, Email
 from marshmallow.validate import OneOf
 
 # from biodm.schemas import UserSchema
@@ -51,7 +51,8 @@ class DatasetSchema(Schema):
     # Fk
     project_id = Integer(required=True)
     submitter_username = String() # Auto-filled
-    contact_username = String(required=True)
+    # contact_username = String(required=True)
+    contact_email = Email(required=True)
 
     # Rel
     project = Nested(DumpProjectSchema)

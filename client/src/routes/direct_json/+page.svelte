@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { base } from "$app/paths";
     import { onMount } from "svelte";
 
     import { type ErrorObject, type SchemaObject } from "ajv";
@@ -32,7 +33,7 @@
             topSchema = (getSchema(capitalizeFirstLetter(entry!)) as SchemaObject);
 
             if(!topSchema || !entry){
-                goto("/");
+                goto(base + "/");
             } else {
                 if(format == "json"){
                     try {
@@ -46,7 +47,7 @@
                 mounted = true;
             }
         } else {
-            goto("/");
+            goto(base + "/");
         }
     })
 

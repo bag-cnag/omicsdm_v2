@@ -88,7 +88,8 @@
             "features_id",
             "healthy_controls_included",
             "additional_info",
-            "contact_username"
+            // "contact_username"
+            "contact_email"
         ] as field
         }
             <AutoInput schema={DatasetSchema} field={field} value={datasetGet(dataset, field)}/>

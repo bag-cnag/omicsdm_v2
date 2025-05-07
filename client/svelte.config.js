@@ -9,6 +9,10 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
+		// paths: { // Uncomment for build pipeline
+		// 	base: '/portalv2',
+		// 	relative: false,
+		// },
 		adapter: adapter({
 			fallback: 'index.html',
 			pages: 'build',
@@ -33,7 +37,7 @@ const config = {
 				'/[...404]'
 			],
 		},
-	}
+	},
 };
 
 export default config;

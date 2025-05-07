@@ -1,5 +1,6 @@
 import { postProjects, type Project } from "client";
 import { goto } from '$app/navigation';
+import { base } from '$app/paths'
 
 import { fieldsToObject } from "$lib/form/fieldsToObject";
 import { ajv, val } from '$lib/validate'
@@ -29,7 +30,7 @@ export function projectCreate(
     else {
         postProjects({body: (data as Project)}).then((response) => {
             if (response.response.ok){
-                goto("/project/" + response.data!.id);
+                goto(base + "/project/" + response.data!.id);
             }
             else if (response.response.status == 409) {
                 displayFormError("A Project with this short_name already exists.");

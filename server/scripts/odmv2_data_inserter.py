@@ -31,7 +31,7 @@ def keycloak_login(username, password, access_only=True):
         action = form['action']
         other_fields = {
             i['name']: i.get('value', '')
-            for i in form.findAll('input', {'type': 'hidden'})
+            for i in form.find_all('input', {'type': 'hidden'})
         }
 
         response = session.post(action, data={
@@ -162,7 +162,8 @@ projects = [
             "healthy_controls_included": "true",
             "additional_info": "jjjj",
             "tags": [{"name": "skibidi"},{"name": "bapbap"}],
-            "contact_username": "neo",
+            # "contact_username": "neo",
+            "contact_email": "neo@keycloak.local",
             "files": [
                 {
                     "filename": "test01",
@@ -222,7 +223,8 @@ projects = [
             "healthy_controls_included": "true",
             "additional_info": "rrrr",
             "tags": [{"name": "skibidi"},{"name": "bapbap"}],
-            "contact_username": "neo",
+            "contact_email": "neo@keycloak.local",
+            # "contact_username": "neo",
             "perm_self": {
                 "read": {"groups": [{"path": "CNAG__OMICS"}]}
             }
@@ -245,7 +247,8 @@ projects = [
             "healthy_controls_included": "false",
             "additional_info": "ref",
             "tags": [{"name": "kraakraa"},{"name": "trruuu"}],
-            "contact_username": "admin",
+            # "contact_username": "admin",
+            "contact_email": "neo@keycloak.local",
             "perm_self": {
                 "read": {"groups": [{"path": "CNAG__OMICS__T1"}]}
             }
@@ -278,7 +281,8 @@ projects = [
             "healthy_controls_included": "false",
             "additional_info": "jjjj",
             "tags": [{"name": "skuuu"},{"name": "krappap"}],
-            "contact_username": "neo",
+            # "contact_username": "neo",
+            "contact_email": "neo@keycloak.local",
             "files": [
                 {
                     "filename": "test02",
