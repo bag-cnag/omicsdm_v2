@@ -19,7 +19,7 @@
         rest?: SvelteRestProps
     } = $props();
 
-    const template_prefix = "./public/metadata_templates/";
+    const template_prefix = "/public/metadata_templates/";
     let display = $state<boolean>(false);
     let template_path = $state<string>(template_prefix + entry + "_template.csv");
 
