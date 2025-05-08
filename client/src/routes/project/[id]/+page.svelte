@@ -174,7 +174,7 @@
                             {#each dataset_fields as field}
                                 {@const value = datasetGet(row, field)}
                                 <td style={schemaGetProp((DatasetSchema), field)?.format == 'date' ? "white-space: nowrap;" : null}>
-                                    {#if field == 'tags'}
+                                    {#if field == 'tags' && value}
                                         {(value as Array<Tag>).map((t) => t.name).join(', ')}
                                     {:else}
                                         {value}
