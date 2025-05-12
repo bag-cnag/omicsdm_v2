@@ -56,11 +56,6 @@ class Dataset(Versioned, Base):
     description     = Column(TEXT,        nullable=True)  # added
     submission_date = Column(TIMESTAMP(timezone=True),    nullable=False, default=utcnow) # server_default="now()") # default=utcnow)
 
-    # Below: refactored with BioDM permission system
-    # private = true (=dataset is private) or false (=dataset is public)
-    # shared_with = kcloak groups which are able to see that project (0 = ALL?)
-    # groups = db.relationship("Groups", cascade="all,delete")
-
     # Metadata
     disease                   = Column(String(10),    nullable=False)
     treatment                 = Column(String(50),    nullable=False)
@@ -107,6 +102,11 @@ class Dataset(Versioned, Base):
     # "dataset owners" -> permission files
     #                  -> also get shared, explicitely 
     # "dataset owners" are a subset (or subgroups) of the project owners
+
+    # Below: refactored with BioDM permission system
+    # private = true (=dataset is private) or false (=dataset is public)
+    # shared_with = kcloak groups which are able to see that project (0 = ALL?)
+    # groups = db.relationship("Groups", cascade="all,delete")
 
     __permissions__ = (
         Permission("self", read=True, download=True, propagates_to=['files']),

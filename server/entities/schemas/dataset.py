@@ -33,7 +33,10 @@ class DatasetSchema(Schema):
     submission_date = Date(dump_only=True)
 
     # Bio
-    disease =  String(validate=OneOf(("COPD", "ASTHMA", "CD", "UC", "MS", "SLE", "RA")), required=True)
+    disease =  String(
+        validate=OneOf(("COPD", "ASTHMA", "CD", "UC", "MS", "SLE", "RA", "HEALTHY")),
+        required=True
+    )
     treatment =  String(required=True)
     molecular_info =  String(required=True)
     sample_type =  String(required=True)
