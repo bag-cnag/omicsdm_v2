@@ -50,16 +50,20 @@ mapping = {
 if os.getenv('KC_ADMIN_TOKEN'):
     mapping.update({
         'token': {
-          'access_token': KC_ADMIN_TOKEN,  
+          'access_token': os.getenv('KC_ADMIN_TOKEN'),  
           'expires_in': 3600,
         }
     })
-else:
+elif os.getenv('KC_ADMIN_ACCOUNT') and os.getenv('KC_ADMIN_PASSWORD'):
     mapping.update({
         'user_realm_name': "master",
         'username': os.getenv('KC_ADMIN_ACCOUNT'),
         'password': os.getenv('KC_ADMIN_PASSWORD'),
     })
+else:
+    raise Exception("Missing keycloak credentials.")
+
+
 kc_admin = KeycloakAdmin(connection=KeycloakOpenIDConnection(**mapping))
 
 
