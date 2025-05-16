@@ -5,7 +5,7 @@ import { base } from '$app/paths';
 
 
 const _login_url = persisted<string>('ls_login_url', '');
-const redirect_uri = window.location.origin + base + "/login";
+const redirect_uri = window.location.origin + base + "/login/";
 
 
 export async function loginUrl(): Promise<string> {

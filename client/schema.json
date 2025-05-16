@@ -1,0 +1,3654 @@
+{
+  "info": {
+    "description": "",
+    "backend": "BioDM",
+    "backend_version": "0.9.1",
+    "title": "OMICSDM_SERVER_V2",
+    "version": "0.1.0"
+  },
+  "security": [
+    {
+      "Authorization": []
+    }
+  ],
+  "paths": {
+    "/live": {
+      "get": {
+        "description": "Liveness check endpoint",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "get": {
+        "description": "Returns the url for keycloak login page",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirect_uri",
+            "required": false,
+            "description": "Redirect page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login URL",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/refresh": {
+      "post": {
+        "description": "Refresh",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "description": "Refresh token",
+              "schema": {
+                "$ref": "#/components/schemas/Refresh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Keycloak token, containing access_token and refresh_token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "Access token"
+                    },
+                    "expires_in": {
+                      "type": "int",
+                      "description": "Access token expiration"
+                    },
+                    "refresh_expires_in": {
+                      "type": "int",
+                      "description": "Refresh token expiration"
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "description": "Refresh token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or Invalid Refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "description": "Logout",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "description": "Refresh token",
+              "schema": {
+                "$ref": "#/components/schemas/Refresh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or Invalid Refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/syn_ack": {
+      "get": {
+        "description": "Login callback function.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "description": "Login code, that will be redeemed for token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "redirect_uri",
+            "required": false,
+            "description": "Redirect page, matching login request one",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Keycloak token, containing access_token and refresh_token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "Access token"
+                    },
+                    "expires_in": {
+                      "type": "int",
+                      "description": "Access token expiration"
+                    },
+                    "refresh_expires_in": {
+                      "type": "int",
+                      "description": "Refresh token expiration"
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "description": "Refresh token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schema": {
+      "get": {
+        "description": "Returns full API schema",
+        "responses": {
+          "200": {
+            "description": "OpenAPIv3 schema"
+          }
+        }
+      }
+    },
+    "/authenticated": {
+      "get": {
+        "description": "Route to check token validity.",
+        "responses": {
+          "200": {
+            "description": "Userinfo - (user_id, groups).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "User name"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kc_sync": {
+      "get": {
+        "description": "Route to sync DB with keycloak entities, reserved to administrators.",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "description": "Create new(s) entries from request body.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": "Creates associated entit(y|ies)."
+          },
+          "204": {
+            "description": "Empty Payload"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid Data"
+          }
+        }
+      },
+      "get": {
+        "description": "Uses a querystring to filter all resources of that type.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "username",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "password",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "writeOnly": true
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "email",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "firstName",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "lastName",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "groups",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              },
+              "explode": "false"
+            },
+            "required": "false",
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "page start",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "page end",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "supplementary query",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Flag to include X-Total-Count header, comes with an extra query overhead",
+            "in": "query",
+            "name": "count",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Filtered list."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Wrong use of filters."
+          }
+        }
+      }
+    },
+    "/users/schema": {
+      "get": {
+        "description": "Generatate API schema for routes managed by given Controller.",
+        "responses": {
+          "200": {
+            "description": "Returns the Schema as JSON."
+          }
+        }
+      }
+    },
+    "/users/{username}": {
+      "get": {
+        "description": "Query DB for entity with matching id.",
+        "parameters": [
+          {
+            "description": "User username",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid Query"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete resource matching id.",
+        "parameters": [
+          {
+            "description": "User username",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Deletion notice",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Deleted."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "description": "Update an existing resource with request body.",
+        "parameters": [
+          {
+            "description": "User username",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": "Update associated resource."
+          },
+          "204": {
+            "description": "Empty Payload"
+          }
+        }
+      }
+    },
+    "/users/{username}/{attribute}": {
+      "get": {
+        "description": "Query DB for nested collection of entity with matching id.",
+        "parameters": [
+          {
+            "description": "User username",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          },
+          {
+            "description": "nested collection name",
+            "in": "path",
+            "name": "attribute",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid collection name"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/groups": {
+      "post": {
+        "description": "Create new(s) entries from request body.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            },
+            "description": "Creates associated entit(y|ies)."
+          },
+          "204": {
+            "description": "Empty Payload"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid Data"
+          }
+        }
+      },
+      "get": {
+        "description": "Uses a querystring to filter all resources of that type.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "description": "Group name chain separated by '__'",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "users",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "explode": "false"
+            },
+            "required": "false",
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "children",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              },
+              "explode": "false"
+            },
+            "required": "false",
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "page start",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "page end",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "supplementary query",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Flag to include X-Total-Count header, comes with an extra query overhead",
+            "in": "query",
+            "name": "count",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Group"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Filtered list."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Wrong use of filters."
+          }
+        }
+      }
+    },
+    "/groups/schema": {
+      "get": {
+        "description": "Generatate API schema for routes managed by given Controller.",
+        "responses": {
+          "200": {
+            "description": "Returns the Schema as JSON."
+          }
+        }
+      }
+    },
+    "/groups/{path}": {
+      "get": {
+        "description": "Query DB for entity with matching id.",
+        "parameters": [
+          {
+            "description": "Group name chain separated by '__'",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid Query"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete resource matching id.",
+        "parameters": [
+          {
+            "description": "Group name chain separated by '__'",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Deletion notice",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Deleted."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "description": "Update an existing resource with request body.",
+        "parameters": [
+          {
+            "description": "Group name chain separated by '__'",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            },
+            "description": "Update associated resource."
+          },
+          "204": {
+            "description": "Empty Payload"
+          }
+        }
+      }
+    },
+    "/groups/{path}/{attribute}": {
+      "get": {
+        "description": "Query DB for nested collection of entity with matching id.",
+        "parameters": [
+          {
+            "description": "Group name chain separated by '__'",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          },
+          {
+            "description": "nested collection name",
+            "in": "path",
+            "name": "attribute",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid collection name"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/files/{id}_{version}/visualize": {
+      "post": {
+        "description": "Starts a visualizer instance for this file.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Visualizer instance url"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "File has not been uploaded yet, or File not in h5ad format"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Non authenticated request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/files/{id}_{version}/download": {
+      "get": {
+        "description": "Returns a download presigned URL to retrieve file from s3 bucket.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "File download url"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Download a file which has not been uploaded."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "S3 Bucket issue."
+          }
+        }
+      }
+    },
+    "/files/{id}_{version}/complete": {
+      "put": {
+        "description": "Multipart upload completion.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/PartsEtag"
+                },
+                "type": "array"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Completion confirmation 'Completed.'"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Wrongly formatted completion notice."
+          },
+          "4O4": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "S3 Bucket issue."
+          }
+        }
+      }
+    },
+    "/files": {
+      "post": {
+        "description": "Create new(s) entries from request body.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/File"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/File"
+                }
+              }
+            },
+            "description": "Creates associated entit(y|ies)."
+          },
+          "204": {
+            "description": "Empty Payload"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid Data"
+          }
+        }
+      },
+      "get": {
+        "description": "Uses a querystring to filter all resources of that type.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "extension",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "tsv",
+                  "csv",
+                  "txt",
+                  "gz",
+                  "rds",
+                  "rda",
+                  "h5ad",
+                  "h5",
+                  "json",
+                  "yaml",
+                  "yml",
+                  "xml",
+                  "pdf"
+                ]
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 24,
+                "maximum": 107374182400
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "molecular",
+                  "clinical",
+                  "licence"
+                ]
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "enabled",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "description",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "submitter_username",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "dataset_id",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "dataset_version",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "dataset",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/DumpDataset"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "page start",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "page end",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "supplementary query",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Flag to include X-Total-Count header, comes with an extra query overhead",
+            "in": "query",
+            "name": "count",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/File"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Filtered list."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Wrong use of filters."
+          }
+        }
+      }
+    },
+    "/files/schema": {
+      "get": {
+        "description": "Generatate API schema for routes managed by given Controller.",
+        "responses": {
+          "200": {
+            "description": "Returns the Schema as JSON."
+          }
+        }
+      }
+    },
+    "/files/{id}_{version}": {
+      "get": {
+        "description": "Query DB for entity with matching id.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/File"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid Query"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete resource matching id.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Deletion notice",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Deleted."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "description": "Update an existing resource with request body.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/File"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/File"
+                }
+              }
+            },
+            "description": "Update associated resource."
+          },
+          "204": {
+            "description": "Empty Payload"
+          }
+        }
+      }
+    },
+    "/files/{id}_{version}/{attribute}": {
+      "get": {
+        "description": "Query DB for nested collection of entity with matching id.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          },
+          {
+            "description": "nested collection name",
+            "in": "path",
+            "name": "attribute",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/File"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid collection name"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/files/{id}_{version}/release": {
+      "post": {
+        "description": "Release a versioned resource, creating a new entry with incremented version.",
+        "parameters": [
+          {
+            "description": "File id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "File version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/File"
+              }
+            }
+          },
+          "description": "payload - primary keys not allowed -.",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/File"
+                }
+              }
+            },
+            "description": "New resource version, updated values, without its nested collections."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Attempted update of primary key components."
+          }
+        }
+      }
+    },
+    "/projects": {
+      "post": {
+        "description": "Create Project from request body.",
+        "requestBody": {
+          "description": "payload.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Project"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Project Created",
+            "examples": "{\"name\": \"pr_test_xyz\"}\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Empty Payload."
+          }
+        }
+      },
+      "get": {
+        "description": "Uses a querystring to filter all resources of that type.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "short_name",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "long_name",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "description",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "created_at",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "date"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "logo_url",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "datasets",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              },
+              "explode": "false"
+            },
+            "required": "false",
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "perm_datasets",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AssoPermProjectDatasets"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "page start",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "page end",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "supplementary query",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Flag to include X-Total-Count header, comes with an extra query overhead",
+            "in": "query",
+            "name": "count",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Project"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Filtered list."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Wrong use of filters."
+          }
+        }
+      }
+    },
+    "/projects/schema": {
+      "get": {
+        "description": "Generatate API schema for routes managed by given Controller.",
+        "responses": {
+          "200": {
+            "description": "Returns the Schema as JSON."
+          }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "description": "Query DB for entity with matching id.",
+        "parameters": [
+          {
+            "description": "Project id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid Query"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete resource matching id.",
+        "parameters": [
+          {
+            "description": "Project id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Deletion notice",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Deleted."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "description": "Update an existing resource with request body.",
+        "parameters": [
+          {
+            "description": "Project id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Project"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Update associated resource."
+          },
+          "204": {
+            "description": "Empty Payload"
+          }
+        }
+      }
+    },
+    "/projects/{id}/{attribute}": {
+      "get": {
+        "description": "Query DB for nested collection of entity with matching id.",
+        "parameters": [
+          {
+            "description": "Project id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          },
+          {
+            "description": "nested collection name",
+            "in": "path",
+            "name": "attribute",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid collection name"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/datasets": {
+      "post": {
+        "requestBody": {
+          "description": "payload.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Dataset"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Create Dataset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Empty Payload."
+          }
+        }
+      },
+      "get": {
+        "description": "Uses a querystring to filter all resources of that type.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "short_name",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "long_name",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "description",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "disease",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "COPD",
+                  "ASTHMA",
+                  "CD",
+                  "UC",
+                  "MS",
+                  "SLE",
+                  "RA"
+                ]
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "treatment",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "molecular_info",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "sample_type",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "data_type",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "value_type",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "platform",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "genome_assembly",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "annotation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "samples_count",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "features_count",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "features_id",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "healthy_controls_included",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "additional_info",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "submitter_username",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "contact_username",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "project",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/DumpProject"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "tags",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              },
+              "explode": "false"
+            },
+            "required": "false",
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "files",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/File"
+                }
+              },
+              "explode": "false"
+            },
+            "required": "false",
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "perm_self",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AssoPermDatasetSelf"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "in": "query",
+            "name": "perm_files",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AssoPermDatasetFiles"
+              },
+              "explode": "false"
+            },
+            "required": "false"
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "page start",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "page end",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "supplementary query",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Flag to include X-Total-Count header, comes with an extra query overhead",
+            "in": "query",
+            "name": "count",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Dataset"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Filtered list."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Wrong use of filters."
+          }
+        }
+      }
+    },
+    "/datasets/schema": {
+      "get": {
+        "description": "Generatate API schema for routes managed by given Controller.",
+        "responses": {
+          "200": {
+            "description": "Returns the Schema as JSON."
+          }
+        }
+      }
+    },
+    "/datasets/{id}_{version}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Dataset id",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "description": "Dataset version",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Found matching Dataset.",
+            "examples": "{\"id\": \"1\", \"version\": \"1\", \"name\": \"instant_sc_1234\"}\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dataset not found."
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete resource matching id.",
+        "parameters": [
+          {
+            "description": "Dataset id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Dataset version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Deletion notice",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Deleted."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "description": "Update an existing resource with request body.",
+        "parameters": [
+          {
+            "description": "Dataset id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Dataset version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Dataset"
+              }
+            }
+          },
+          "description": "payload.",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            },
+            "description": "Update associated resource."
+          },
+          "204": {
+            "description": "Empty Payload"
+          }
+        }
+      }
+    },
+    "/datasets/{id}_{version}/{attribute}": {
+      "get": {
+        "description": "Query DB for nested collection of entity with matching id.",
+        "parameters": [
+          {
+            "description": "Dataset id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Dataset version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "a comma separated list of fields to query only a subset of the resource\ne.g. /datasets/1_1?name,description,contact,files\n",
+            "in": "query",
+            "name": "fields",
+            "required": false
+          },
+          {
+            "description": "nested collection name",
+            "in": "path",
+            "name": "attribute",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            },
+            "description": "Found matching item"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid collection name"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/datasets/{id}_{version}/release": {
+      "post": {
+        "description": "Release a versioned resource, creating a new entry with incremented version.",
+        "parameters": [
+          {
+            "description": "Dataset id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Dataset version",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Dataset"
+              }
+            }
+          },
+          "description": "payload - primary keys not allowed -.",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            },
+            "description": "New resource version, updated values, without its nested collections."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Attempted update of primary key components."
+          }
+        }
+      }
+    }
+  },
+  "openapi": "3.0.2",
+  "components": {
+    "schemas": {
+      "Refresh": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Group name chain separated by '__'"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          },
+          "parent": {
+            "readOnly": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Group"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PartsEtag": {
+        "type": "object",
+        "properties": {
+          "PartNumber": {
+            "type": "integer"
+          },
+          "ETag": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "ListGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssoPermDatasetSelf": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "id_download": {
+            "type": "integer"
+          },
+          "download": {
+            "$ref": "#/components/schemas/ListGroup"
+          },
+          "id_read": {
+            "type": "integer"
+          },
+          "read": {
+            "$ref": "#/components/schemas/ListGroup"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssoPermDatasetFiles": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "id_write": {
+            "type": "integer"
+          },
+          "write": {
+            "$ref": "#/components/schemas/ListGroup"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DumpDataset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "is_latest": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "short_name": {
+            "type": "string"
+          },
+          "long_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "submission_date": {
+            "type": "string",
+            "format": "date",
+            "readOnly": true
+          },
+          "disease": {
+            "type": "string",
+            "enum": [
+              "COPD",
+              "ASTHMA",
+              "CD",
+              "UC",
+              "MS",
+              "SLE",
+              "RA"
+            ]
+          },
+          "treatment": {
+            "type": "string"
+          },
+          "molecular_info": {
+            "type": "string"
+          },
+          "sample_type": {
+            "type": "string"
+          },
+          "data_type": {
+            "type": "string"
+          },
+          "value_type": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "genome_assembly": {
+            "type": "string"
+          },
+          "annotation": {
+            "type": "string"
+          },
+          "samples_count": {
+            "type": "integer"
+          },
+          "features_count": {
+            "type": "integer"
+          },
+          "features_id": {
+            "type": "string"
+          },
+          "healthy_controls_included": {
+            "type": "boolean"
+          },
+          "additional_info": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "integer"
+          },
+          "submitter_username": {
+            "type": "string"
+          },
+          "contact_username": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          },
+          "perm_self": {
+            "$ref": "#/components/schemas/AssoPermDatasetSelf"
+          },
+          "perm_files": {
+            "$ref": "#/components/schemas/AssoPermDatasetFiles"
+          }
+        },
+        "required": [
+          "annotation",
+          "contact_username",
+          "data_type",
+          "disease",
+          "features_count",
+          "features_id",
+          "genome_assembly",
+          "healthy_controls_included",
+          "molecular_info",
+          "platform",
+          "project_id",
+          "sample_type",
+          "samples_count",
+          "short_name",
+          "treatment",
+          "value_type"
+        ],
+        "additionalProperties": false
+      },
+      "UploadPart": {
+        "type": "object",
+        "properties": {
+          "upload_id": {
+            "type": "integer"
+          },
+          "part_number": {
+            "type": "integer"
+          },
+          "etag": {
+            "type": "string"
+          },
+          "form": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Upload": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UploadPart"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "File": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "is_latest": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "filename": {
+            "type": "string"
+          },
+          "extension": {
+            "type": "string",
+            "enum": [
+              "tsv",
+              "csv",
+              "txt",
+              "gz",
+              "rds",
+              "rda",
+              "h5ad",
+              "h5",
+              "json",
+              "yaml",
+              "yml",
+              "xml",
+              "pdf"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 24,
+            "maximum": 107374182400
+          },
+          "ready": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "dl_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "emited_at": {
+            "type": "string",
+            "format": "date",
+            "readOnly": true
+          },
+          "validated_at": {
+            "type": "string",
+            "format": "date",
+            "readOnly": true
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "molecular",
+              "clinical",
+              "licence"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "submitter_username": {
+            "type": "string"
+          },
+          "dataset_id": {
+            "type": "integer"
+          },
+          "dataset_version": {
+            "type": "integer"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/DumpDataset"
+          },
+          "upload": {
+            "readOnly": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Upload"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dataset_id",
+          "dataset_version",
+          "extension",
+          "filename",
+          "size",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "AssoPermProjectDatasets": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "id_download": {
+            "type": "integer"
+          },
+          "download": {
+            "$ref": "#/components/schemas/ListGroup"
+          },
+          "id_write": {
+            "type": "integer"
+          },
+          "write": {
+            "$ref": "#/components/schemas/ListGroup"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DumpProject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "short_name": {
+            "type": "string"
+          },
+          "long_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "logo_url": {
+            "type": "string"
+          },
+          "perm_datasets": {
+            "$ref": "#/components/schemas/AssoPermProjectDatasets"
+          }
+        },
+        "required": [
+          "short_name"
+        ],
+        "additionalProperties": false
+      },
+      "Dataset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "is_latest": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "short_name": {
+            "type": "string"
+          },
+          "long_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "submission_date": {
+            "type": "string",
+            "format": "date",
+            "readOnly": true
+          },
+          "disease": {
+            "type": "string",
+            "enum": [
+              "COPD",
+              "ASTHMA",
+              "CD",
+              "UC",
+              "MS",
+              "SLE",
+              "RA"
+            ]
+          },
+          "treatment": {
+            "type": "string"
+          },
+          "molecular_info": {
+            "type": "string"
+          },
+          "sample_type": {
+            "type": "string"
+          },
+          "data_type": {
+            "type": "string"
+          },
+          "value_type": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "genome_assembly": {
+            "type": "string"
+          },
+          "annotation": {
+            "type": "string"
+          },
+          "samples_count": {
+            "type": "integer"
+          },
+          "features_count": {
+            "type": "integer"
+          },
+          "features_id": {
+            "type": "string"
+          },
+          "healthy_controls_included": {
+            "type": "boolean"
+          },
+          "additional_info": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "integer"
+          },
+          "submitter_username": {
+            "type": "string"
+          },
+          "contact_username": {
+            "type": "string"
+          },
+          "project": {
+            "$ref": "#/components/schemas/DumpProject"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/File"
+            }
+          },
+          "perm_self": {
+            "$ref": "#/components/schemas/AssoPermDatasetSelf"
+          },
+          "perm_files": {
+            "$ref": "#/components/schemas/AssoPermDatasetFiles"
+          }
+        },
+        "required": [
+          "annotation",
+          "contact_username",
+          "data_type",
+          "disease",
+          "features_count",
+          "features_id",
+          "genome_assembly",
+          "healthy_controls_included",
+          "molecular_info",
+          "platform",
+          "project_id",
+          "sample_type",
+          "samples_count",
+          "short_name",
+          "treatment",
+          "value_type"
+        ],
+        "additionalProperties": false
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "short_name": {
+            "type": "string"
+          },
+          "long_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "logo_url": {
+            "type": "string"
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dataset"
+            }
+          },
+          "perm_datasets": {
+            "$ref": "#/components/schemas/AssoPermProjectDatasets"
+          }
+        },
+        "required": [
+          "short_name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Authorization": {
+        "type": "https",
+        "name": "authorization",
+        "in": "header",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

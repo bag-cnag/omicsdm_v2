@@ -8,7 +8,7 @@
     import { onMount } from "svelte";
 
     import { OpenAPIV3 } from "openapi-types"
-    import { Tabs, TabItem } from 'flowbite-svelte';
+    import { Tabs, TabItem, ImagePlaceholder } from 'flowbite-svelte';
     import { 
         TableHandler, Datatable, Th,
         ThFilter, RowCount, RowsPerPage, Pagination, type State
@@ -30,6 +30,7 @@
     import { datasetCreate, projectShare } from "./submit";
     import DirectForm from "$lib/form/DirectForm.svelte";
     import ThVersionFilter from "$lib/table/ThVersionFilter.svelte";
+    import { check_url_is_image } from "$lib/remote/image";
 
 
     // Local context
@@ -117,8 +118,17 @@
 <Tabs class="relative">
     <TabItem open title="Overview">
         <div class="md:flex md:items-center space-y-4 flex flex-wrap">
-            <!-- <div> -->
-            <img class="flex-col" style="height:200px" src="{page_project.logo_url}" alt="logo">
+            {#await check_url_is_image(page_project.logo_url)}
+                <ImagePlaceholder imgOnly/>
+            {:then img_good}
+                <img
+                    class="flex-col"
+                    style="height:200px"
+                    src="{img_good ? page_project.logo_url : base + "/default_project_logo.png"}"
+                    alt="logo"
+                >
+            {/await}
+
             <div class="flex-col w-1/4"></div>
             <div class="flex-col ml-4">
                 <h1>{page_project.short_name}</h1>

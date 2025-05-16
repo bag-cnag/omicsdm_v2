@@ -10,25 +10,36 @@
     import Login from '$lib/Login.svelte'
 	import config from 'config';
 	import { client } from 'client';
+	import { updated } from '$app/state';
 
 	import { FooterCopyright, Navbar, NavBrand, NavLi, NavUl, NavHamburger,
 			 Avatar, DropdownHeader, DropdownItem, Dropdown } from 'flowbite-svelte';
 
+
 	let { children } = $props();
 
-	// Track last visited page
-	beforeNavigate((nav) => {
+
+	beforeNavigate(({ willUnload, from, to }) => {
+		// Track last visited page
 		let url = ""
-		if(!nav.from || !nav.from.url){
+		if(!from || !from.url){
 			url = "/"
 		} else {
-			url = nav.from!.url.toString()
+			url = from!.url.toString()
 		}
 		lastpage.set(url);
+
+		// necessary when production version gets updated
+		// https://svelte.dev/docs/kit/configuration#version
+		if (updated.current && !willUnload && to?.url) {
+			location.href = to.url.href;
+		}
 	});
+
 
 	let activeUrl = $state<string>();
 	$effect(() => { activeUrl = page.url.pathname; })
+
 
 	// Set server url for codegen fetch client.
 	client.setConfig({

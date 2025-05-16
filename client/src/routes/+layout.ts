@@ -2,7 +2,7 @@ export const ssr = false;
 export const csr = true;
 // export const prerender = "auto";
 export const prerender = true;
-
+export const trailingSlash = 'always';
 
 
 import { client, getLogin, type Error } from 'client';
@@ -37,11 +37,15 @@ client.interceptors.response.use(async (response) => {
     if (response.status == 511 && window.location.href !== window.location.origin + base + '/'){
         const url = (await getLogin({ // TODO: use store if possible.
             query: {
-              redirect_uri: window.location.origin + base + "/login"
+              redirect_uri: window.location.origin + base + "/login/"
             }
         })).data;
         const content: Error = await response.clone().json()
-        if(content.message.includes('Authentication required.')){
+        if(
+            content.message.includes('Authentication required.') ||
+            content.message.includes('Refresh token missing.') ||
+            content.message.includes('Invalid refresh token.')
+        ){
             window.location.assign(url!);
         }
     }

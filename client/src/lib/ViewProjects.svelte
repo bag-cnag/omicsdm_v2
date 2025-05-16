@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { CardPlaceholder } from "flowbite-svelte";
 	import { base } from '$app/paths';
     import { Card } from 'flowbite-svelte';
     import { getProjects } from 'client';
     import type { Project } from 'client';
+    import { check_url_is_image } from './remote/image';
 
     interface ProjectAndDiseases extends Project {
         diseases: Set<string>
@@ -41,22 +43,35 @@
         <p>loading</p>
     {:then data}
         {#each data as project}
-            <Card class="mt-2 mr-2" img="{project.logo_url}" href={base + "/project/" + project.id} imgClass="h-64" horizontal size="md">
-                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    {project.short_name}
-                </h5>
-                <p class="mb-3 font-normal text-gray-700 dark:text-gray-400 leading-tight">
-                    {project.long_name}
-                </p>
-                {#if project.diseases?.size > 0}
-                    <p>
-                        Diseases:
-                        {#each project.diseases as disease }
-                            <span class="bg-gray-100">{disease}</span>&nbsp;
-                        {/each}
+             {#await check_url_is_image(project.logo_url)}
+                <CardPlaceholder size="md"/>
+             {:then img_good}
+                <Card
+                    class="mt-2 mr-2"
+                    img={
+                        project.logo_url && img_good ?
+                        project.logo_url :
+                        base + "/default_project_logo.png"
+                    }
+                    href={base + "/project/" + project.id}
+                    imgClass="h-64" horizontal size="md"
+                >
+                    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        {project.short_name}
+                    </h5>
+                    <p class="mb-3 font-normal text-gray-700 dark:text-gray-400 leading-tight">
+                        {project.long_name}
                     </p>
-                {/if}
-            </Card>
+                    {#if project.diseases?.size > 0}
+                        <p>
+                            Diseases:
+                            {#each project.diseases as disease }
+                                <span class="bg-gray-100">{disease}</span>&nbsp;
+                            {/each}
+                        </p>
+                    {/if}
+                </Card>
+            {/await}
         {/each}
     {:catch error}
 	    <p class="text-red-800">{error.message}</p>

@@ -303,6 +303,18 @@
             console.error(response.error!.message)
         }
     }
+
+    function processFileName(filename: string){
+        // Processes filenames to remove legacy bits.
+        const name_parts = filename.substring(filename.lastIndexOf('/')+1).split('_uploadedVersion_');
+        let temp = ""
+        if (name_parts.length >1){
+            temp = name_parts.slice(0, -1).join('');
+        } else {
+            temp = name_parts[0];
+        }
+        return temp.split('.')[0]
+    }
 </script>
 
 <style lang="postcss">
@@ -363,7 +375,7 @@
                             <!-- {@debug table} -->
                             <!-- ^|v -->
                             <td>{row.description}</td>
-                            <td>{row.filename}.{row.extension}</td>
+                            <td>{processFileName(row.filename)}.{row.extension}</td>
                             <td>
                                 {row.version}&nbsp;
                                 <span class="pricol">
