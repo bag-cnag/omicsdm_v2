@@ -14,7 +14,7 @@ def main():
     app = Api(
         controllers=controllers.CONTROLLERS,
         manifests=manifests.MANIFESTS,
-        debug=True,
+        # debug=True,
         test=False
     )
     return app
