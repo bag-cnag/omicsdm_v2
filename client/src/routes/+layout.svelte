@@ -1,23 +1,23 @@
 <script lang="ts">
 	import '../app.css';
 
+	import { version } from '$app/environment';
 	import { beforeNavigate } from '$app/navigation';
-	import { page } from '$app/state'
+	import { updated, page } from '$app/state';
 	import { base } from '$app/paths';
-	import { get } from "svelte/store";
+	import { get } from 'svelte/store';
 
-	import { isAuthenticated, user, lastpage } from "auth";
+	import { isAuthenticated, user, lastpage } from 'auth';
     import Login from '$lib/Login.svelte'
 	import config from 'config';
 	import { client } from 'client';
-	import { updated } from '$app/state';
 
 	import { FooterCopyright, Navbar, NavBrand, NavLi, NavUl, NavHamburger,
 			 Avatar, DropdownHeader, DropdownItem, Dropdown } from 'flowbite-svelte';
+	import { stored_version } from 'config';
 
 
 	let { children } = $props();
-
 
 	beforeNavigate(({ willUnload, from, to }) => {
 		// Track last visited page
@@ -29,11 +29,11 @@
 		}
 		lastpage.set(url);
 
-
 		// necessary when production version gets updated
 		// https://svelte.dev/docs/kit/configuration#version
 		if (updated.current){ // Update detected.
 			localStorage.clear(); // Clear all svelte-persisted-stores.
+			stored_version.set(version);
 			if (!willUnload && to?.url) {
 				location.href = to.url.href;
 			}

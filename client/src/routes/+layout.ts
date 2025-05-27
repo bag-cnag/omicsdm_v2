@@ -8,10 +8,11 @@ export const trailingSlash = 'always';
 import { client, getLogin, type Error } from 'client';
 import { refresh, token, expires } from 'auth';
 import { isEmpty } from '$lib/types/obj';
-import { get } from "svelte/store";
+import { get } from 'svelte/store';
 import type { LayoutLoad } from './$types';
-import { setConfig } from 'config';
+import { setConfig, stored_version } from 'config';
 import { base } from '$app/paths';
+import { version } from '$app/environment';
 
 
 export const load: LayoutLoad = async () => {
@@ -19,6 +20,13 @@ export const load: LayoutLoad = async () => {
         setConfig(window.config);
     }
 };
+
+
+// Check for version updates when loading the page.
+if(version != get(stored_version)){
+    localStorage.clear(); // Clear all svelte-persisted-stores.
+    stored_version.set(version);
+}
 
 
 // Set token middleware
