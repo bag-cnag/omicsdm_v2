@@ -15,7 +15,7 @@ def main():
         controllers=controllers.CONTROLLERS,
         manifests=manifests.MANIFESTS,
         # debug=True,
-        test=False
+        test=False,
     )
     return app
 

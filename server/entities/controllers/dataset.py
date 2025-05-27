@@ -36,8 +36,6 @@ class DatasetController(ResourceController):
                 description: Empty Payload.
         """
 
-    # TODO: document all endpoints
-
     @overload_docstring
     async def read(**kwargs):
         """
