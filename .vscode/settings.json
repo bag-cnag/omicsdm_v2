@@ -3,4 +3,23 @@
     "[svelte]": {
         "editor.defaultFormatter": "svelte.svelte-vscode"
     },
+    "search.exclude": {
+        "**/venv": true,
+        "**__pycache__**": true,
+        "**/node_modules": true,
+        "**/.svelte-kit": true,
+        "**/build": true,
+        "**/bak": true,
+        "**/wheel": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/venv**": true,
+        "**__pycache__**": true,
+        "**/.svelte-kit": true,
+        "**/build": true,
+        "**/bak": true,
+        "**/wheel": true
+    },
 }

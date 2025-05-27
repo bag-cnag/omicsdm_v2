@@ -29,10 +29,14 @@
 		}
 		lastpage.set(url);
 
+
 		// necessary when production version gets updated
 		// https://svelte.dev/docs/kit/configuration#version
-		if (updated.current && !willUnload && to?.url) {
-			location.href = to.url.href;
+		if (updated.current){ // Update detected.
+			localStorage.clear(); // Clear all svelte-persisted-stores.
+			if (!willUnload && to?.url) {
+				location.href = to.url.href;
+			}
 		}
 	});
 

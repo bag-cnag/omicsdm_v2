@@ -68,7 +68,9 @@ export async function uploadChunk(chunk: Blob, url: string){
     let response = await fetch(url, {
         method: 'PUT',
         body: chunk,
-        headers: {'Content-Encoding': 'gzip'}
+        headers: {
+            'Content-Type': 'application/gzip'
+        }
     }).then( res => {
         if(!res.ok){
             return res.text().then(text => {
