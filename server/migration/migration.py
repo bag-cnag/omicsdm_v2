@@ -594,7 +594,7 @@ async def main():
 
 
         except Exception as e:
-            print(f"Error during database reflection: {e}") from e
+            print(f"Error during database reflection: {e}")
             await dst_s.rollback()
 
 
