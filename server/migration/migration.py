@@ -220,8 +220,9 @@ async def main():
                 # 1. Search keycloak
                 groupname = one.kc_groupname.strip()
                 kc_group = kc_groups.get(groupname, None)
-                if not kc_group:
-                    raise Exception(f"Group {groupname} not present in keycloak.")
+                if not kc_group: # If not present, create it.
+                    kc_group = kc_admin.create_group({"name": groupname})
+                    kc_groups[kc_groups['name']] = kc_group
 
                 # 2. Create mapping
                 mapping = {
