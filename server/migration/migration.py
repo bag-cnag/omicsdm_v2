@@ -221,7 +221,8 @@ async def main():
                 groupname = one.kc_groupname.strip()
                 kc_group = kc_groups.get(groupname, None)
                 if not kc_group: # If not present, create it.
-                    kc_group = kc_admin.create_group({"name": groupname})
+                    kc_group_id = kc_admin.create_group({"name": groupname})
+                    kc_group = kc_admin.get_group(kc_group_id)
                     kc_groups[kc_group['name']] = kc_group # Add to list in case
 
                 # 2. Create mapping
@@ -593,7 +594,7 @@ async def main():
 
 
         except Exception as e:
-            print(f"Error during database reflection: {e}")
+            print(f"Error during database reflection: {e}") from e
             await dst_s.rollback()
 
 
