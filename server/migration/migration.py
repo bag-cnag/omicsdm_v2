@@ -261,8 +261,17 @@ async def main():
             for src_username in src_users:
                 # 1. Get user information through KC, raise if not exists
                 kc_user = kc_users.get(src_username, None)
-                if not kc_user:
-                    raise Exception(f"Group {src_username} not present in keycloak.")
+                if not kc_user: # If missing, create it on the fly.
+                    payload = {
+                        "username": src_username,
+                        "enabled": True,
+                        "requiredActions": [],
+                        "groups": [],
+                        "emailVerified": False,
+                    }
+                    kc_user_id = kc_admin.create_user(payload, exist_ok=True) # create
+                    kc_user = kc_admin.get_user(kc_user_id) # get from id
+                    kc_users[src_username] = kc_user # add to the list
 
                 # 2. Mapping
                 mapping = {
