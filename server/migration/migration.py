@@ -290,23 +290,28 @@ async def main():
                 kc_user_groups = await kc_admin.a_get_user_groups(
                     user_id=kc_user['id'], brief_representation=True
                 )
+
+                # Get collection
+                c_field = next(
+                    attr for attr in dir(mapped_user) if str(attr).startswith('group_collection')
+                )
+                collection = await getattr(mapped_user.awaitable_attrs, c_field)
+
                 if len(kc_user_groups) == 1:
                     group_name = kc_user_groups[0]['name']
                     dst_groups_by_username[kc_user['username']] = group_name
 
-                    c_field = next(
-                        attr for attr in dir(mapped_user) if str(attr).startswith('group_collection')
-                    )
-                    collection = await getattr(mapped_user.awaitable_attrs, c_field)
-
                     # 5. Add to group collection
-                    if dst_groups_by_name.get(group_name) not in collection:
-                        collection.append(dst_groups_by_name.get(group_name))
+                    if dst_groups_by_name.get(group_name):
+                        if dst_groups_by_name.get(group_name) not in collection:
+                            collection.append(dst_groups_by_name.get(group_name))
 
-                elif len(kc_user_groups) > 1:
+                else:
                     raise Exception(
                         "Integrity Error: OmicsDM V1 users should belong to at most one group."
                     )
+
+                collection = collection
 
             # 6. Validate
             await dst_s.flush()
