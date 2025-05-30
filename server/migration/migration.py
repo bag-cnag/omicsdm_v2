@@ -222,7 +222,7 @@ async def main():
                 kc_group = kc_groups.get(groupname, None)
                 if not kc_group: # If not present, create it.
                     kc_group = kc_admin.create_group({"name": groupname})
-                    kc_groups[kc_groups['name']] = kc_group
+                    kc_groups[kc_group['name']] = kc_group # Add to list in case
 
                 # 2. Create mapping
                 mapping = {
