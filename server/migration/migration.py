@@ -68,9 +68,9 @@ kc_admin = KeycloakAdmin(connection=KeycloakOpenIDConnection(**mapping))
 
 
 # DB
-src_engine = create_async_engine(os.getenv('SOURCE_DB_URL'), echo=True)
+src_engine = create_async_engine(os.getenv('SOURCE_DB_URL'), echo=False)
 src_session = async_sessionmaker(src_engine, class_=AsyncSession, expire_on_commit=False)
-dst_engine = create_async_engine(os.getenv('TARGET_DB_URL'), echo=True)
+dst_engine = create_async_engine(os.getenv('TARGET_DB_URL'), echo=False)
 dst_session = async_sessionmaker(dst_engine, class_=AsyncSession, expire_on_commit=False)
 src_metadata = MetaData()
 dst_metadata = MetaData()
@@ -493,24 +493,28 @@ async def main():
                             dst_dataset_names_by_id[mapped_dataset.id] + '/' +
                             'dataPolicy' + '/' + fname
                         )
-
-                        mapping = {
-                            'dataset_id': mapped_dataset.id,
-                            'dataset_version': 1,
-                            'filename': extless_key,
-                            'extension': fext,
-                            'enabled': True,
-                            'ready': True,
-                            'dl_count': 0,
-                            'emited_at': one.submission_date,
-                            'validated_at': one.submission_date,
-                            'submitter_username': one.submitter_name,
-                            'type': 'licence',
-                            'size': get_s3_file_size(extless_key + '.' + fext),
-                            'key_salt': '' # Not necessary for v1 data.
-                        }
-                        # Store to insert after sequence reset at the end.
-                        dataset_attached_files.append(dst_t("file")(**mapping))
+                        try:
+                            mapping = {
+                                'dataset_id': mapped_dataset.id,
+                                'dataset_version': 1,
+                                'filename': extless_key,
+                                'extension': fext,
+                                'enabled': True,
+                                'ready': True,
+                                'dl_count': 0,
+                                'emited_at': one.submission_date,
+                                'validated_at': one.submission_date,
+                                'submitter_username': one.submitter_name,
+                                'type': 'licence',
+                                'size': get_s3_file_size(extless_key + '.' + fext),
+                                'key_salt': '' # Not necessary for v1 data.
+                            }
+                            file = dst_t("file")(**mapping)
+                            dst_s.add(file)
+                            # Store to insert after sequence reset at the end.
+                            dataset_attached_files.append(file)
+                        except Exception as e:
+                            print({e})
 
                 clinical_file = gec(one, 'file2')
                 if clinical_file:
@@ -524,24 +528,29 @@ async def main():
                             dst_dataset_names_by_id[mapped_dataset.id] + '/' +
                             'clinical' + '/' + fname
                         )
+                        try:
+                            mapping = {
+                                'dataset_id': mapped_dataset.id,
+                                'dataset_version': 1,
+                                'filename': extless_key,
+                                'extension': fext,
+                                'enabled': True,
+                                'ready': True,
+                                'dl_count': 0,
+                                'emited_at': one.submission_date,
+                                'validated_at': one.submission_date,
+                                'submitter_username': one.submitter_name,
+                                'type': 'clinical',
+                                'size': get_s3_file_size(extless_key + '.' + fext),
+                                'key_salt': '' # Not necessary for v1 data.
+                            }
+                            file = dst_t("file")(**mapping)
+                            dst_s.add(file)
+                            # Store to insert after sequence reset at the end.
+                            dataset_attached_files.append(file)
 
-                        mapping = {
-                            'dataset_id': mapped_dataset.id,
-                            'dataset_version': 1,
-                            'filename': extless_key,
-                            'extension': fext,
-                            'enabled': True,
-                            'ready': True,
-                            'dl_count': 0,
-                            'emited_at': one.submission_date,
-                            'validated_at': one.submission_date,
-                            'submitter_username': one.submitter_name,
-                            'type': 'clinical',
-                            'size': get_s3_file_size(extless_key + '.' + fext),
-                            'key_salt': '' # Not necessary for v1 data.
-                        }
-                        # Store to insert after sequence reset at the end.
-                        dataset_attached_files.append(dst_t("file")(**mapping))
+                        except Exception as e:
+                            print({e})
 
             ## FILE
             stmt = select(src_t("files"))
@@ -574,27 +583,30 @@ async def main():
                             dst_dataset_names_by_id[dataset_id] + '/' +
                             file.name + '_uploadedVersion_' + str(file.version)
                         )
-                        mapping = {
-                            'id': file_id,
-                            'version': file.version,
-                            'dataset_id': file.dataset_id,
-                            'dataset_version': 1,
-                            'filename': extless_key,
-                            'extension': extension,
-                            'description': gec(file, 'comment'),
-                            'enabled': file.enabled,
-                            'ready': file.upload_finished,
-                            'dl_count': 0,
-                            'emited_at': file.submission_date,
-                            'validated_at': file.submission_date,
-                            'submitter_username': file.submitter_name,
-                            'type': 'molecular',
-                            'size': get_s3_file_size(extless_key + '.' + extension),
-                            'key_salt': '' # Not necessary for v1 data.
-                        }
+                        try:
+                            mapping = {
+                                'id': file_id,
+                                'version': file.version,
+                                'dataset_id': file.dataset_id,
+                                'dataset_version': 1,
+                                'filename': extless_key,
+                                'extension': extension,
+                                'description': gec(file, 'comment'),
+                                'enabled': file.enabled,
+                                'ready': file.upload_finished,
+                                'dl_count': 0,
+                                'emited_at': file.submission_date,
+                                'validated_at': file.submission_date,
+                                'submitter_username': file.submitter_name,
+                                'type': 'molecular',
+                                'size': get_s3_file_size(extless_key + '.' + extension),
+                                'key_salt': '' # Not necessary for v1 data.
+                            }
 
-                        mapped_file = dst_t("file")(**mapping)
-                        dst_s.add(mapped_file)
+                            mapped_file = dst_t("file")(**mapping)
+                            dst_s.add(mapped_file)
+                        except Exception as e:
+                            print({e})
             await dst_s.flush()
 
             # set relevant sequences
@@ -613,8 +625,8 @@ async def main():
             await dst_s.rollback()
 
 
-        # await dst_s.rollback() # For testing
-        await dst_s.commit() # When ready
+        await dst_s.rollback() # For testing
+        # await dst_s.commit() # When ready
 
 
 if __name__ == "__main__":
