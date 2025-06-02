@@ -367,7 +367,7 @@ async def main():
             dst_tags_map = {}
             dataset_attached_files = []
 
-            stmt = select(src_t("datasets"))
+            stmt = select(src_t("datasets")).order_by(src_t("datasets").id)
             src_datasets = (await src_s.scalars(stmt)).unique().all()
 
             for one in src_datasets:
