@@ -26,6 +26,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import registry
 from sqlalchemy.orm import DeclarativeBase
 
+# import warnings
+# from sqlalchemy.exc import SAWarning, SADeprecationWarning
+
+
+# # warnings.filterwarnings('error')
+# warnings.filterwarnings('error', category=SAWarning)
+# warnings.filterwarnings('ignore', category=SADeprecationWarning)
+
 
 load_dotenv()
 
@@ -213,11 +221,12 @@ async def main():
             raise Exception(f"Error reseting {column} sequence on table {table.__name__}: {e}")
 
 
-    # Listgroups
-    lg_class = dst_t("listgroup")
-    sample = lg_class() # Somehow, it causes bugs when doing it on the class directly
-    lg_c_field = next(attr for attr in dir(sample) if str(attr).startswith('group_collection'))
 
+
+    # Listgroups
+    # lg_class = 
+    sample = dst_t("listgroup")() # Somehow, it causes bugs when doing it on the class directly
+    lg_c_field = next(attr for attr in dir(sample) if str(attr).startswith('group_collection'))
 
     # Lookup tables
     src_files_by_dataset_id = {} # SRC files by SRC dataset_id
@@ -364,14 +373,14 @@ async def main():
                 dst_s.add(perm)
 
                 # write
-                lg_write = lg_class()
+                lg_write = dst_t("listgroup")() #{lg_class()
                 setattr(lg_write, lg_c_field, owners)
                 dst_s.add(lg_write)
 
                 # download
                 lg_download = None
                 if not gec(one, 'file_dl_allowed', False):
-                    lg_download = lg_class()
+                    lg_download = dst_t("listgroup")() # lg_class()
                     setattr(lg_download, c_field, owners)
                     dst_s.add(lg_download)
 
@@ -461,7 +470,7 @@ async def main():
                 perm_files = DstAssoPermDatasetFiles(**{'id_dataset': one.id, 'version_dataset': 1})
                 dst_s.add(perm_files)
                 if owners:
-                    lg_write = lg_class()
+                    lg_write = dst_t("listgroup")() # lg_class()
                     setattr(lg_write, lg_c_field, owners)
                     dst_s.add(lg_write)
                     await dst_s.flush()
@@ -475,12 +484,12 @@ async def main():
                 dst_s.add(perm_self)
 
                 if shared_with:
-                    lg_read = lg_class()
-                    lg_download = lg_class()
+                    lg_read = dst_t("listgroup")()
+                    lg_download = dst_t("listgroup")()
                     setattr(lg_read, lg_c_field, shared_with)
                     setattr(lg_download, lg_c_field, shared_with)
                     dst_s.add(lg_read)
-                    dst_s.add(lg_write)
+                    dst_s.add(lg_download)
                     await dst_s.flush()
                     perm_files.id_read = lg_read.id
                     perm_files.id_download = lg_download.id
@@ -676,8 +685,9 @@ async def main():
 
 
         except Exception as e:
-            print(f"Error during database reflection: {e}")
+            # print(f"Error during database reflection: {e}")
             await dst_s.rollback()
+            raise
 
 
         await dst_s.rollback() # For testing
