@@ -195,7 +195,6 @@ async def main():
             print({e})
             raise
 
-
     async def set_sequence_to_max(table: Type[DeclarativeBase], column: str, session: AsyncSession):
         """Sets sequence attached on column to max value that is stored in the table."""
         try:
@@ -210,8 +209,8 @@ async def main():
                 text(f"SELECT setval('{seq_name}', :val, true)"),
                 {'val': max_id}
             )
-        except Exception as _:
-            raise Exception(f"Error reseting {column} sequence on table {table.__name__}")
+        except Exception as e:
+            raise Exception(f"Error reseting {column} sequence on table {table.__name__}: {e}")
 
 
     # Listgroups
