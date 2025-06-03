@@ -188,6 +188,10 @@ async def main():
         filename,
         molecular: bool= False
     ) -> Tuple[str, str, int]:
+        # Handle culprit filename
+        if "3TRMS_DATA_LABELS_2024-03-17_1301" in filename:
+            dataset_id = '3TR-MS'
+
         size = None
         root, ext = filename.split('.', maxsplit=1)
         key = owner_group + '/' + dataset_id + '/' + file_type_separator
