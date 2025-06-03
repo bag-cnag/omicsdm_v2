@@ -203,7 +203,7 @@ async def main():
             seq_name = re.search(r'\"([^"]*)\"', seq_text).group()
 
             stmt = select(func.max(col))
-            max_id = (await session.scalar(stmt)) or 0
+            max_id = (await session.scalar(stmt)) or 1
 
             await session.execute(
                 text(f"SELECT setval('{seq_name}', :val, true)"),
