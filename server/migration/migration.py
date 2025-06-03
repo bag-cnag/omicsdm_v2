@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Tuple
 import asyncio
 from email.utils import parseaddr
 import os
@@ -39,6 +39,7 @@ s3 = boto3.resource(
     region_name="us-east-1",
     verify=False,
 )
+
 
 # KC
 mapping = {
@@ -171,6 +172,29 @@ async def main():
                 return obj.content_length  # size in bytes; ClientError if file does not exist
             except:
                 raise Exception(f"s3 - {key} not found")
+    
+    def build_key_and_get_size(
+        owner_group,
+        dataset_id,
+        file_type_separator,
+        filename,
+        molecular: bool= False
+    ) -> Tuple[str, str, int]:
+        size = None
+        root, ext = filename.split('.', maxsplit=1)
+        key = owner_group + '/' + dataset_id + '/' + file_type_separator
+        if not molecular:
+            key = key + (
+                '/' + root
+            )
+
+        try:
+            size = get_s3_file_size(key + '.' + ext)
+            return key, ext, size
+        except Exception as e:
+            print({e})
+            raise
+
 
     async def set_sequence_to_max(table: Type[DeclarativeBase], column: str, session: AsyncSession):
         """Sets sequence attached on column to max value that is stored in the table."""
@@ -202,7 +226,7 @@ async def main():
     dst_groups_by_name = {} # DST groups by name
     dst_groups_by_username = {} # DST groups by user username
     dst_dataset_names_by_id = {} # DST dataset.short_name by dataset.id
-
+    dst_dataset_owner_by_dataset_id = {}
 
     async with src_session() as src_s, dst_session() as dst_s:
         try:
@@ -310,8 +334,6 @@ async def main():
                     raise Exception(
                         "Integrity Error: OmicsDM V1 users should belong to at most one group."
                     )
-
-                collection = collection
 
             # 6. Validate
             await dst_s.flush()
@@ -424,6 +446,12 @@ async def main():
                     for link in src_dataset_groups or []
                 ]
 
+                if len(owners) != 1:
+                    print(f"Exc: dataset {one.dataset_id} has {len(owners)} (!= 1) owners.")
+
+                owner = owners[0]
+                dst_dataset_owner_by_dataset_id[one.dataset_id] = owner
+
                 # Find shared_with
                 shared_with = [
                     dst_groups_by_src_id[src_id_owner]
@@ -484,21 +512,29 @@ async def main():
                 licence_file = gec(one, 'file')
                 if licence_file:
                     for file in licence_file:
-                        fname,  fext = file.split('.', maxsplit=1)
+                        # fname,  fext = file.split('.', maxsplit=1)
                         # policy_aws_key = "/".join(
                         #     [group_name, dataset_id, "dataPolicy", policy_file[0]]
                         # )
-                        extless_key = (
-                            dst_groups_by_username[one.submitter_name] + '/' +
-                            dst_dataset_names_by_id[mapped_dataset.id] + '/' +
-                            'dataPolicy' + '/' + fname
-                        )
+                        # extless_key = (
+                        #     dst_groups_by_username[one.submitter_name] + '/' +
+                        #     dst_dataset_names_by_id[mapped_dataset.id] + '/' +
+                        #     'dataPolicy' + '/' + fname
+                        # )
+
                         try:
+                            key, ext, size = build_key_and_get_size(
+                                # owner_group=dst_groups_by_username[one.submitter_name],
+                                owner_group=owner,
+                                dataset_id=dst_dataset_names_by_id[mapped_dataset.id],
+                                file_type_separator='dataPolicy',
+                                filename=file
+                            )
                             mapping = {
                                 'dataset_id': mapped_dataset.id,
                                 'dataset_version': 1,
-                                'filename': extless_key,
-                                'extension': fext,
+                                'filename': key,
+                                'extension': ext,
                                 'enabled': True,
                                 'ready': True,
                                 'dl_count': 0,
@@ -506,34 +542,43 @@ async def main():
                                 'validated_at': one.submission_date,
                                 'submitter_username': one.submitter_name,
                                 'type': 'licence',
-                                'size': get_s3_file_size(extless_key + '.' + fext),
+                                'size': size,
                                 'key_salt': '' # Not necessary for v1 data.
                             }
                             file = dst_t("file")(**mapping)
                             dst_s.add(file)
                             # Store to insert after sequence reset at the end.
                             dataset_attached_files.append(file)
-                        except Exception as e:
-                            print({e})
+                        except:
+                            continue
+
 
                 clinical_file = gec(one, 'file2')
                 if clinical_file:
                     for file in clinical_file:
-                        fname,  fext = file.split('.', maxsplit=1)
+                        # fname,  fext = file.split('.', maxsplit=1)
                         # clinical_aws_key = "/".join(
                         #     [group_name, dataset_id, "clinical", clinical_file[0]]
                         # )
-                        extless_key = (
-                            dst_groups_by_username[one.submitter_name] + '/' +
-                            dst_dataset_names_by_id[mapped_dataset.id] + '/' +
-                            'clinical' + '/' + fname
-                        )
+                        # extless_key = (
+                        #     dst_groups_by_username[one.submitter_name] + '/' +
+                        #     dst_dataset_names_by_id[mapped_dataset.id] + '/' +
+                        #     'clinical' + '/' + fname
+                        # )
+
                         try:
+                            key, ext, size = build_key_and_get_size(
+                                # owner_group=dst_groups_by_username[one.submitter_name],
+                                owner_group=owner,
+                                dataset_id=dst_dataset_names_by_id[mapped_dataset.id],
+                                file_type_separator='clinical',
+                                filename=file
+                            )
                             mapping = {
                                 'dataset_id': mapped_dataset.id,
                                 'dataset_version': 1,
-                                'filename': extless_key,
-                                'extension': fext,
+                                'filename': key,
+                                'extension': ext,
                                 'enabled': True,
                                 'ready': True,
                                 'dl_count': 0,
@@ -541,7 +586,7 @@ async def main():
                                 'validated_at': one.submission_date,
                                 'submitter_username': one.submitter_name,
                                 'type': 'clinical',
-                                'size': get_s3_file_size(extless_key + '.' + fext),
+                                'size': size,
                                 'key_salt': '' # Not necessary for v1 data.
                             }
                             file = dst_t("file")(**mapping)
@@ -549,8 +594,8 @@ async def main():
                             # Store to insert after sequence reset at the end.
                             dataset_attached_files.append(file)
 
-                        except Exception as e:
-                            print({e})
+                        except:
+                            continue
 
             ## FILE
             stmt = select(src_t("files"))
@@ -577,36 +622,47 @@ async def main():
             for dataset_id, files in src_files_by_dataset_id.items():
                 for file_id, file_versions in files.items():
                     for file in file_versions:
-                        _, extension = file.name.split('.', maxsplit=1)
-                        extless_key = (
-                            dst_groups_by_username[file.submitter_name] + '/' +
-                            dst_dataset_names_by_id[dataset_id] + '/' +
-                            file.name + '_uploadedVersion_' + str(file.version)
-                        )
+                        # _, extension = file.name.split('.', maxsplit=1)
+                        # extless_key = (
+                        #     dst_groups_by_username[file.submitter_name] + '/' +
+                        #     dst_dataset_names_by_id[dataset_id] + '/' +
+                        #     file.name + '_uploadedVersion_' + str(file.version)
+                        # )
                         try:
-                            mapping = {
-                                'id': file_id,
-                                'version': file.version,
-                                'dataset_id': file.dataset_id,
-                                'dataset_version': 1,
-                                'filename': extless_key,
-                                'extension': extension,
-                                'description': gec(file, 'comment'),
-                                'enabled': file.enabled,
-                                'ready': file.upload_finished,
-                                'dl_count': 0,
-                                'emited_at': file.submission_date,
-                                'validated_at': file.submission_date,
-                                'submitter_username': file.submitter_name,
-                                'type': 'molecular',
-                                'size': get_s3_file_size(extless_key + '.' + extension),
-                                'key_salt': '' # Not necessary for v1 data.
-                            }
+                            key, ext, size = build_key_and_get_size(
+                                # owner_group=dst_groups_by_username[file.submitter_name],
+                                owner_group=dst_dataset_owner_by_dataset_id[dataset_id],
+                                dataset_id=dst_dataset_names_by_id[dataset_id],
+                                file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
+                                filename=file,
+                                molecular=True
+                            )
 
-                            mapped_file = dst_t("file")(**mapping)
-                            dst_s.add(mapped_file)
-                        except Exception as e:
-                            print({e})
+                            if len(ext.split('.')) > 1:
+                                ext = ext.split('.')[-1]
+                                mapping = {
+                                    'id': file_id,
+                                    'version': file.version,
+                                    'dataset_id': file.dataset_id,
+                                    'dataset_version': 1,
+                                    'filename': key,
+                                    'extension': ext,
+                                    'description': gec(file, 'comment'),
+                                    'enabled': file.enabled,
+                                    'ready': file.upload_finished,
+                                    'dl_count': 0,
+                                    'emited_at': file.submission_date,
+                                    'validated_at': file.submission_date,
+                                    'submitter_username': file.submitter_name,
+                                    'type': 'molecular',
+                                    'size': size,
+                                    'key_salt': '' # Not necessary for v1 data.
+                                }
+
+                                mapped_file = dst_t("file")(**mapping)
+                                dst_s.add(mapped_file)
+                        except:
+                            continue
             await dst_s.flush()
 
             # set relevant sequences
