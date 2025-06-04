@@ -79,7 +79,7 @@ kc_admin = KeycloakAdmin(connection=KeycloakOpenIDConnection(**mapping))
 # DB
 src_engine = create_async_engine(os.getenv('SOURCE_DB_URL'), echo=False)
 src_session = async_sessionmaker(src_engine, class_=AsyncSession, expire_on_commit=False)
-dst_engine = create_async_engine(os.getenv('TARGET_DB_URL'), echo=True)
+dst_engine = create_async_engine(os.getenv('TARGET_DB_URL'), echo=False)
 dst_session = async_sessionmaker(dst_engine, class_=AsyncSession, expire_on_commit=False)
 src_metadata = MetaData()
 dst_metadata = MetaData()
@@ -549,7 +549,7 @@ async def main():
                             continue
 
                         except Exception as e:
-                            print(e)
+                            print("Exc (1): ", e)
 
                 clinical_file = gec(one, 'file2')
                 if clinical_file:
@@ -583,7 +583,7 @@ async def main():
                             continue
 
                         except Exception as e:
-                            print(e)
+                            print("Exc (2): ", e)
 
             ## FILE
             stmt = select(src_t("files"))
@@ -612,7 +612,7 @@ async def main():
                     for file in file_versions:
                         try:
                             key, ext, size = build_key_and_get_size(
-                                owner_group=dst_dataset_owner_by_dataset_id[dataset_id],
+                                owner_group=dst_dataset_owner_by_dataset_id[dataset_id].path,
                                 dataset_id=dst_dataset_names_by_id[dataset_id],
                                 file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
                                 filename=file,
@@ -642,11 +642,14 @@ async def main():
 
                                 mapped_file = dst_t("file")(**mapping)
                                 dst_s.add(mapped_file)
+                                print("## Molecular file: ", mapped_file)
+
                         except S3Exception:
                             continue
 
                         except Exception as e:
-                            print(e)
+                            print("Exc (3): ", e)
+
 
             await dst_s.flush()
 
@@ -658,6 +661,7 @@ async def main():
             # Add attached files, after sequence set
             if dataset_attached_files:
                 dst_s.add_all(dataset_attached_files)
+                print("### Attached files: ", dataset_attached_files)
                 await dst_s.flush()
 
         except Exception as e:
