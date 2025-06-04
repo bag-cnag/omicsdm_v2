@@ -615,7 +615,7 @@ async def main():
                             owner_group=dst_dataset_owner_by_id[file.dataset_id].path,
                             dataset_id=dst_dataset_short_names_by_id[file.dataset_id],
                             file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
-                            filename=file,
+                            filename=file.name,
                             molecular=True
                         )
 
