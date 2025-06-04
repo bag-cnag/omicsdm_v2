@@ -235,7 +235,7 @@ async def main():
     dst_groups_by_src_id = {} # DST groups by SRC group_id
     dst_groups_by_name = {} # DST groups by name
     dst_dataset_short_names_by_id = {} # DST dataset.short_name by dataset.id
-    dst_dataset_owner_by_dataset_id = {}
+    dst_dataset_owner_by_id = {}
 
     async with src_session() as src_s, dst_session() as dst_s:
         try:
@@ -458,7 +458,7 @@ async def main():
                     print(f"Exc: dataset {one.dataset_id} has {len(owners)} (!= 1) owners.")
 
                 owner = owners[0]
-                dst_dataset_owner_by_dataset_id[one.dataset_id] = owner
+                dst_dataset_owner_by_id[one.id] = owner
 
                 # Find shared_with
                 shared_with = [
@@ -612,7 +612,7 @@ async def main():
                     for file in file_versions:
                         # try:
                         key, ext, size = build_key_and_get_size(
-                            owner_group=dst_dataset_owner_by_dataset_id[dataset_id].path,
+                            owner_group=dst_dataset_owner_by_id[file.dataset_id].path,
                             dataset_id=dst_dataset_short_names_by_id[file.dataset_id],
                             file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
                             filename=file,
@@ -651,7 +651,7 @@ async def main():
                         # except Exception as e:
                         #     print("Exc (3): ", e)
                         #     print(
-                        #         dst_dataset_owner_by_dataset_id[dataset_id].path, " , ",
+                        #         dst_dataset_owner_by_id[dataset_id].path, " , ",
                         #         dst_dataset_short_names_by_id[file.dataset_id], " , ",
                         #         dataset_id, " , ", file.dataset_id,
                         #     )
