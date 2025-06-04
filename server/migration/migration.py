@@ -79,7 +79,7 @@ kc_admin = KeycloakAdmin(connection=KeycloakOpenIDConnection(**mapping))
 # DB
 src_engine = create_async_engine(os.getenv('SOURCE_DB_URL'), echo=False)
 src_session = async_sessionmaker(src_engine, class_=AsyncSession, expire_on_commit=False)
-dst_engine = create_async_engine(os.getenv('TARGET_DB_URL'), echo=False)
+dst_engine = create_async_engine(os.getenv('TARGET_DB_URL'), echo=True)
 dst_session = async_sessionmaker(dst_engine, class_=AsyncSession, expire_on_commit=False)
 src_metadata = MetaData()
 dst_metadata = MetaData()
@@ -180,7 +180,9 @@ async def main():
                 return obj.content_length  # size in bytes; ClientError if file does not exist
             except:
                 raise Exception(f"s3 - {key} not found")
-    
+
+    class S3Exception(Exception): ...
+
     def build_key_and_get_size(
         owner_group,
         dataset_id,
@@ -205,7 +207,7 @@ async def main():
             return key, ext, size
         except Exception as e:
             print({e})
-            raise
+            raise S3Exception()
 
     async def set_sequence_to_max(table: Type[DeclarativeBase], column: str, session: AsyncSession):
         """Sets sequence attached on column to max value that is stored in the table."""
@@ -224,11 +226,7 @@ async def main():
         except Exception as e:
             raise Exception(f"Error reseting {column} sequence on table {table.__name__}: {e}")
 
-
-
-
     # Listgroups
-    # lg_class = 
     sample = dst_t("listgroup")() # Somehow, it causes bugs when doing it on the class directly
     lg_c_field = next(attr for attr in dir(sample) if str(attr).startswith('group_collection'))
 
@@ -236,7 +234,6 @@ async def main():
     src_files_by_dataset_id = {} # SRC files by SRC dataset_id
     dst_groups_by_src_id = {} # DST groups by SRC group_id
     dst_groups_by_name = {} # DST groups by name
-    dst_groups_by_username = {} # DST groups by user username
     dst_dataset_names_by_id = {} # DST dataset.short_name by dataset.id
     dst_dataset_owner_by_dataset_id = {}
 
@@ -335,7 +332,6 @@ async def main():
 
                 if len(kc_user_groups) == 1:
                     group_name = kc_user_groups[0]['name']
-                    dst_groups_by_username[kc_user['username']] = group_name
 
                     # 5. Add to group collection
                     if dst_groups_by_name.get(group_name):
@@ -524,19 +520,8 @@ async def main():
                 licence_file = gec(one, 'file')
                 if licence_file:
                     for file in licence_file:
-                        # fname,  fext = file.split('.', maxsplit=1)
-                        # policy_aws_key = "/".join(
-                        #     [group_name, dataset_id, "dataPolicy", policy_file[0]]
-                        # )
-                        # extless_key = (
-                        #     dst_groups_by_username[one.submitter_name] + '/' +
-                        #     dst_dataset_names_by_id[mapped_dataset.id] + '/' +
-                        #     'dataPolicy' + '/' + fname
-                        # )
-
                         try:
                             key, ext, size = build_key_and_get_size(
-                                # owner_group=dst_groups_by_username[one.submitter_name],
                                 owner_group=owner,
                                 dataset_id=dst_dataset_names_by_id[mapped_dataset.id],
                                 file_type_separator='dataPolicy',
@@ -557,30 +542,20 @@ async def main():
                                 'size': size,
                                 'key_salt': '' # Not necessary for v1 data.
                             }
-                            file = dst_t("file")(**mapping)
-                            dst_s.add(file)
                             # Store to insert after sequence reset at the end.
-                            dataset_attached_files.append(file)
-                        except:
+                            dataset_attached_files.append(dst_t("file")(**mapping))
+
+                        except S3Exception:
                             continue
 
+                        except Exception as e:
+                            print(e)
 
                 clinical_file = gec(one, 'file2')
                 if clinical_file:
                     for file in clinical_file:
-                        # fname,  fext = file.split('.', maxsplit=1)
-                        # clinical_aws_key = "/".join(
-                        #     [group_name, dataset_id, "clinical", clinical_file[0]]
-                        # )
-                        # extless_key = (
-                        #     dst_groups_by_username[one.submitter_name] + '/' +
-                        #     dst_dataset_names_by_id[mapped_dataset.id] + '/' +
-                        #     'clinical' + '/' + fname
-                        # )
-
                         try:
                             key, ext, size = build_key_and_get_size(
-                                # owner_group=dst_groups_by_username[one.submitter_name],
                                 owner_group=owner,
                                 dataset_id=dst_dataset_names_by_id[mapped_dataset.id],
                                 file_type_separator='clinical',
@@ -601,13 +576,14 @@ async def main():
                                 'size': size,
                                 'key_salt': '' # Not necessary for v1 data.
                             }
-                            file = dst_t("file")(**mapping)
-                            dst_s.add(file)
                             # Store to insert after sequence reset at the end.
-                            dataset_attached_files.append(file)
+                            dataset_attached_files.append(dst_t("file")(**mapping))
 
-                        except:
+                        except S3Exception:
                             continue
+
+                        except Exception as e:
+                            print(e)
 
             ## FILE
             stmt = select(src_t("files"))
@@ -634,15 +610,8 @@ async def main():
             for dataset_id, files in src_files_by_dataset_id.items():
                 for file_id, file_versions in files.items():
                     for file in file_versions:
-                        # _, extension = file.name.split('.', maxsplit=1)
-                        # extless_key = (
-                        #     dst_groups_by_username[file.submitter_name] + '/' +
-                        #     dst_dataset_names_by_id[dataset_id] + '/' +
-                        #     file.name + '_uploadedVersion_' + str(file.version)
-                        # )
                         try:
                             key, ext, size = build_key_and_get_size(
-                                # owner_group=dst_groups_by_username[file.submitter_name],
                                 owner_group=dst_dataset_owner_by_dataset_id[dataset_id],
                                 dataset_id=dst_dataset_names_by_id[dataset_id],
                                 file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
@@ -673,8 +642,12 @@ async def main():
 
                                 mapped_file = dst_t("file")(**mapping)
                                 dst_s.add(mapped_file)
-                        except:
+                        except S3Exception:
                             continue
+
+                        except Exception as e:
+                            print(e)
+
             await dst_s.flush()
 
             # set relevant sequences
@@ -687,14 +660,12 @@ async def main():
                 dst_s.add_all(dataset_attached_files)
                 await dst_s.flush()
 
-
         except Exception as e:
             print(f"Error during database reflection: {e}")
             await dst_s.rollback()
-            # raise
 
-        await dst_s.rollback() # For testing
-        # await dst_s.commit() # When ready
+        # await dst_s.rollback() # For testing
+        await dst_s.commit() # When ready
 
 
 if __name__ == "__main__":
