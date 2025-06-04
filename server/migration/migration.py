@@ -234,7 +234,7 @@ async def main():
     src_files_by_dataset_id = {} # SRC files by SRC dataset_id
     dst_groups_by_src_id = {} # DST groups by SRC group_id
     dst_groups_by_name = {} # DST groups by name
-    dst_dataset_names_by_id = {} # DST dataset.short_name by dataset.id
+    dst_dataset_short_names_by_id = {} # DST dataset.short_name by dataset.id
     dst_dataset_owner_by_dataset_id = {}
 
     async with src_session() as src_s, dst_session() as dst_s:
@@ -441,7 +441,7 @@ async def main():
                 mapped_dataset = dst_t("dataset")(**mapping)
                 dst_s.add(mapped_dataset)
                 await dst_s.flush()
-                dst_dataset_names_by_id[one.id] = one.dataset_id
+                dst_dataset_short_names_by_id[one.id] = one.dataset_id
 
                 # Find owners
                 stmt = (
@@ -522,8 +522,8 @@ async def main():
                     for file in licence_file:
                         try:
                             key, ext, size = build_key_and_get_size(
-                                owner_group=owner,
-                                dataset_id=dst_dataset_names_by_id[mapped_dataset.id],
+                                owner_group=owner.path,
+                                dataset_id=dst_dataset_short_names_by_id[mapped_dataset.id],
                                 file_type_separator='dataPolicy',
                                 filename=file
                             )
@@ -556,8 +556,8 @@ async def main():
                     for file in clinical_file:
                         try:
                             key, ext, size = build_key_and_get_size(
-                                owner_group=owner,
-                                dataset_id=dst_dataset_names_by_id[mapped_dataset.id],
+                                owner_group=owner.path,
+                                dataset_id=dst_dataset_short_names_by_id[mapped_dataset.id],
                                 file_type_separator='clinical',
                                 filename=file
                             )
@@ -613,7 +613,7 @@ async def main():
                         try:
                             key, ext, size = build_key_and_get_size(
                                 owner_group=dst_dataset_owner_by_dataset_id[dataset_id].path,
-                                dataset_id=dst_dataset_names_by_id[dataset_id],
+                                dataset_id=dst_dataset_short_names_by_id[file.dataset_id],
                                 file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
                                 filename=file,
                                 molecular=True
@@ -649,7 +649,12 @@ async def main():
 
                         except Exception as e:
                             print("Exc (3): ", e)
-
+                            print(
+                                dst_dataset_owner_by_dataset_id[dataset_id].path, " , ",
+                                dst_dataset_short_names_by_id[file.dataset_id], " , ",
+                                dataset_id, " , ", file.dataset_id,
+                            )
+                            print("----")
 
             await dst_s.flush()
 
@@ -661,7 +666,6 @@ async def main():
             # Add attached files, after sequence set
             if dataset_attached_files:
                 dst_s.add_all(dataset_attached_files)
-                print("### Attached files: ", dataset_attached_files)
                 await dst_s.flush()
 
         except Exception as e:
