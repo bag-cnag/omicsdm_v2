@@ -197,10 +197,15 @@ async def main():
         size = None
         root, ext = filename.split('.', maxsplit=1)
         key = owner_group + '/' + dataset_id + '/' + file_type_separator
+
         if not molecular:
             key = key + (
                 '/' + root
             )
+        else:
+            s = ext.split('.')
+            if len(s) > 1:
+                ext = s[-1]
 
         try:
             size = get_s3_file_size(key + '.' + ext)
@@ -619,35 +624,31 @@ async def main():
                             molecular=True
                         )
 
-                        if len(ext.split('.')) > 1:
-                            ext = ext.split('.')[-1]
-                            mapping = {
-                                'id': file_id,
-                                'version': file.version,
-                                'dataset_id': file.dataset_id,
-                                'dataset_version': 1,
-                                'filename': key,
-                                'extension': ext,
-                                'description': gec(file, 'comment'),
-                                'enabled': file.enabled,
-                                'ready': file.upload_finished,
-                                'dl_count': 0,
-                                'emited_at': file.submission_date,
-                                'validated_at': file.submission_date,
-                                'submitter_username': file.submitter_name,
-                                'type': 'molecular',
-                                'size': size,
-                                'key_salt': '' # Not necessary for v1 data.
-                            }
+                        mapping = {
+                            'id': file_id,
+                            'version': file.version,
+                            'dataset_id': file.dataset_id,
+                            'dataset_version': 1,
+                            'filename': key,
+                            'extension': ext,
+                            'description': gec(file, 'comment'),
+                            'enabled': file.enabled,
+                            'ready': file.upload_finished,
+                            'dl_count': 0,
+                            'emited_at': file.submission_date,
+                            'validated_at': file.submission_date,
+                            'submitter_username': file.submitter_name,
+                            'type': 'molecular',
+                            'size': size,
+                            'key_salt': '' # Not necessary for v1 data.
+                        }
 
-                            mapped_file = dst_t("file")(**mapping)
-                            dst_s.add(mapped_file)
+                        mapped_file = dst_t("file")(**mapping)
+                        dst_s.add(mapped_file)
 
-                            # print("## Molecular file: ", mapped_file)
-
+                        # print("## Molecular file: ", mapped_file)
                         # except S3Exception:
                         #     continue
-
                         # except Exception as e:
                         #     print("Exc (3): ", e)
                         #     print(
