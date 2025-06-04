@@ -192,7 +192,7 @@ async def main():
     ) -> Tuple[str, str, int]:
         # Handle culprit filename
         if "3TRMS_DATA_LABELS_2024-03-17_1301" in filename:
-            dataset_id = '3TR-MS'
+            dataset_id = '3TR_MS_'
 
         size = None
         root, ext = filename.split('.', maxsplit=1)
@@ -610,51 +610,52 @@ async def main():
             for dataset_id, files in src_files_by_dataset_id.items():
                 for file_id, file_versions in files.items():
                     for file in file_versions:
-                        try:
-                            key, ext, size = build_key_and_get_size(
-                                owner_group=dst_dataset_owner_by_dataset_id[dataset_id].path,
-                                dataset_id=dst_dataset_short_names_by_id[file.dataset_id],
-                                file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
-                                filename=file,
-                                molecular=True
-                            )
+                        # try:
+                        key, ext, size = build_key_and_get_size(
+                            owner_group=dst_dataset_owner_by_dataset_id[dataset_id].path,
+                            dataset_id=dst_dataset_short_names_by_id[file.dataset_id],
+                            file_type_separator=file.name + '_uploadedVersion_' + str(file.version),
+                            filename=file,
+                            molecular=True
+                        )
 
-                            if len(ext.split('.')) > 1:
-                                ext = ext.split('.')[-1]
-                                mapping = {
-                                    'id': file_id,
-                                    'version': file.version,
-                                    'dataset_id': file.dataset_id,
-                                    'dataset_version': 1,
-                                    'filename': key,
-                                    'extension': ext,
-                                    'description': gec(file, 'comment'),
-                                    'enabled': file.enabled,
-                                    'ready': file.upload_finished,
-                                    'dl_count': 0,
-                                    'emited_at': file.submission_date,
-                                    'validated_at': file.submission_date,
-                                    'submitter_username': file.submitter_name,
-                                    'type': 'molecular',
-                                    'size': size,
-                                    'key_salt': '' # Not necessary for v1 data.
-                                }
+                        if len(ext.split('.')) > 1:
+                            ext = ext.split('.')[-1]
+                            mapping = {
+                                'id': file_id,
+                                'version': file.version,
+                                'dataset_id': file.dataset_id,
+                                'dataset_version': 1,
+                                'filename': key,
+                                'extension': ext,
+                                'description': gec(file, 'comment'),
+                                'enabled': file.enabled,
+                                'ready': file.upload_finished,
+                                'dl_count': 0,
+                                'emited_at': file.submission_date,
+                                'validated_at': file.submission_date,
+                                'submitter_username': file.submitter_name,
+                                'type': 'molecular',
+                                'size': size,
+                                'key_salt': '' # Not necessary for v1 data.
+                            }
 
-                                mapped_file = dst_t("file")(**mapping)
-                                dst_s.add(mapped_file)
-                                print("## Molecular file: ", mapped_file)
+                            mapped_file = dst_t("file")(**mapping)
+                            dst_s.add(mapped_file)
 
-                        except S3Exception:
-                            continue
+                            # print("## Molecular file: ", mapped_file)
 
-                        except Exception as e:
-                            print("Exc (3): ", e)
-                            print(
-                                dst_dataset_owner_by_dataset_id[dataset_id].path, " , ",
-                                dst_dataset_short_names_by_id[file.dataset_id], " , ",
-                                dataset_id, " , ", file.dataset_id,
-                            )
-                            print("----")
+                        # except S3Exception:
+                        #     continue
+
+                        # except Exception as e:
+                        #     print("Exc (3): ", e)
+                        #     print(
+                        #         dst_dataset_owner_by_dataset_id[dataset_id].path, " , ",
+                        #         dst_dataset_short_names_by_id[file.dataset_id], " , ",
+                        #         dataset_id, " , ", file.dataset_id,
+                        #     )
+                        #     print("----")
 
             await dst_s.flush()
 
