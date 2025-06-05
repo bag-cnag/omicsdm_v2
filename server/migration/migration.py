@@ -26,14 +26,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import registry
 from sqlalchemy.orm import DeclarativeBase
 
-# import warnings
-# from sqlalchemy.exc import SAWarning, SADeprecationWarning
-
-
-# # warnings.filterwarnings('error')
-# warnings.filterwarnings('error', category=SAWarning)
-# warnings.filterwarnings('ignore', category=SADeprecationWarning)
-
 
 load_dotenv()
 
@@ -378,14 +370,14 @@ async def main():
                 dst_s.add(perm)
 
                 # write
-                lg_write = dst_t("listgroup")() #{lg_class()
+                lg_write = dst_t("listgroup")()
                 setattr(lg_write, lg_c_field, owners)
                 dst_s.add(lg_write)
 
                 # download
                 lg_download = None
                 if not gec(one, 'file_dl_allowed', False):
-                    lg_download = dst_t("listgroup")() # lg_class()
+                    lg_download = dst_t("listgroup")()
                     setattr(lg_download, c_field, owners)
                     dst_s.add(lg_download)
 
@@ -475,7 +467,7 @@ async def main():
                 perm_files = DstAssoPermDatasetFiles(**{'id_dataset': one.id, 'version_dataset': 1})
                 dst_s.add(perm_files)
                 if owners:
-                    lg_write = dst_t("listgroup")() # lg_class()
+                    lg_write = dst_t("listgroup")()
                     setattr(lg_write, lg_c_field, owners)
                     dst_s.add(lg_write)
                     await dst_s.flush()
@@ -525,70 +517,56 @@ async def main():
                 licence_file = gec(one, 'file')
                 if licence_file:
                     for file in licence_file:
-                        try:
-                            key, ext, size = build_key_and_get_size(
-                                owner_group=owner.path,
-                                dataset_id=dst_dataset_short_names_by_id[mapped_dataset.id],
-                                file_type_separator='dataPolicy',
-                                filename=file
-                            )
-                            mapping = {
-                                'dataset_id': mapped_dataset.id,
-                                'dataset_version': 1,
-                                'filename': key,
-                                'extension': ext,
-                                'enabled': True,
-                                'ready': True,
-                                'dl_count': 0,
-                                'emited_at': one.submission_date,
-                                'validated_at': one.submission_date,
-                                'submitter_username': one.submitter_name,
-                                'type': 'licence',
-                                'size': size,
-                                'key_salt': '' # Not necessary for v1 data.
-                            }
-                            # Store to insert after sequence reset at the end.
-                            dataset_attached_files.append(dst_t("file")(**mapping))
-
-                        except S3Exception:
-                            continue
-
-                        except Exception as e:
-                            print("Exc (1): ", e)
+                        key, ext, size = build_key_and_get_size(
+                            owner_group=owner.path,
+                            dataset_id=dst_dataset_short_names_by_id[mapped_dataset.id],
+                            file_type_separator='dataPolicy',
+                            filename=file
+                        )
+                        mapping = {
+                            'dataset_id': mapped_dataset.id,
+                            'dataset_version': 1,
+                            'filename': key,
+                            'extension': ext,
+                            'enabled': True,
+                            'ready': True,
+                            'dl_count': 0,
+                            'emited_at': one.submission_date,
+                            'validated_at': one.submission_date,
+                            'submitter_username': one.submitter_name,
+                            'type': 'licence',
+                            'size': size,
+                            'key_salt': '' # Not necessary for v1 data.
+                        }
+                        # Store to insert after sequence reset at the end.
+                        dataset_attached_files.append(dst_t("file")(**mapping))
 
                 clinical_file = gec(one, 'file2')
                 if clinical_file:
                     for file in clinical_file:
-                        try:
-                            key, ext, size = build_key_and_get_size(
-                                owner_group=owner.path,
-                                dataset_id=dst_dataset_short_names_by_id[mapped_dataset.id],
-                                file_type_separator='clinical',
-                                filename=file
-                            )
-                            mapping = {
-                                'dataset_id': mapped_dataset.id,
-                                'dataset_version': 1,
-                                'filename': key,
-                                'extension': ext,
-                                'enabled': True,
-                                'ready': True,
-                                'dl_count': 0,
-                                'emited_at': one.submission_date,
-                                'validated_at': one.submission_date,
-                                'submitter_username': one.submitter_name,
-                                'type': 'clinical',
-                                'size': size,
-                                'key_salt': '' # Not necessary for v1 data.
-                            }
-                            # Store to insert after sequence reset at the end.
-                            dataset_attached_files.append(dst_t("file")(**mapping))
-
-                        except S3Exception:
-                            continue
-
-                        except Exception as e:
-                            print("Exc (2): ", e)
+                        key, ext, size = build_key_and_get_size(
+                            owner_group=owner.path,
+                            dataset_id=dst_dataset_short_names_by_id[mapped_dataset.id],
+                            file_type_separator='clinical',
+                            filename=file
+                        )
+                        mapping = {
+                            'dataset_id': mapped_dataset.id,
+                            'dataset_version': 1,
+                            'filename': key,
+                            'extension': ext,
+                            'enabled': True,
+                            'ready': True,
+                            'dl_count': 0,
+                            'emited_at': one.submission_date,
+                            'validated_at': one.submission_date,
+                            'submitter_username': one.submitter_name,
+                            'type': 'clinical',
+                            'size': size,
+                            'key_salt': '' # Not necessary for v1 data.
+                        }
+                        # Store to insert after sequence reset at the end.
+                        dataset_attached_files.append(dst_t("file")(**mapping))
 
             ## FILE
             stmt = select(src_t("files"))
@@ -645,18 +623,6 @@ async def main():
 
                         mapped_file = dst_t("file")(**mapping)
                         dst_s.add(mapped_file)
-
-                        # print("## Molecular file: ", mapped_file)
-                        # except S3Exception:
-                        #     continue
-                        # except Exception as e:
-                        #     print("Exc (3): ", e)
-                        #     print(
-                        #         dst_dataset_owner_by_id[dataset_id].path, " , ",
-                        #         dst_dataset_short_names_by_id[file.dataset_id], " , ",
-                        #         dataset_id, " , ", file.dataset_id,
-                        #     )
-                        #     print("----")
 
             await dst_s.flush()
 
