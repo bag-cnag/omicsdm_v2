@@ -34,32 +34,3 @@ asso_dataset_file = Table(
         ['FILE.id', 'FILE.version']
     )
 )
-
-# asso_dscoll_file = Table(
-#     "ASSO_DSCOLL_FILE",
-#     Base.metadata,
-#     Column("filecollection_id", ForeignKey("FILECOLLECTION.id"),   primary_key=True),
-#     Column("file_id",                                              primary_key=True),
-#     Column("file_version",                                         primary_key=True),
-#     ForeignKeyConstraint(
-#         ['file_id', 'file_version'],
-#         ['FILE.id', 'FILE.version']
-#     )
-# )
-
-# asso_dscoll_file = Table(
-#     "ASSO_DSCOLL_FILE",
-#     Base.metadata,
-#     Column("dataset_id",                                       primary_key=True),
-#     Column("dataset_version",                                  primary_key=True),
-#     Column("file_id",                                          primary_key=True),
-#     Column("file_version",                                     primary_key=True),
-#     ForeignKeyConstraint(
-#         ['dataset_id', 'dataset_version'],
-#         ['FILECOLLECTION.dataset_id', 'FILECOLLECTION.dataset_version']
-#     ),
-#     ForeignKeyConstraint(
-#         ['file_id', 'file_version'],
-#         ['FILE.id', 'FILE.version']
-#     )
-# )

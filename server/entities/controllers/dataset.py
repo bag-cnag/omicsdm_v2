@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING
 
 from biodm.components.controllers import ResourceController, overload_docstring
-from biodm.components.services import UnaryEntityService, CompositeEntityService
+from biodm.components.services import UnaryEntityService
 
 from entities.tables import Tag
-#, FileCollection
 
 if TYPE_CHECKING:
     from biodm.api import Api

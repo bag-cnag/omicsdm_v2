@@ -1,30 +1,10 @@
-from biodm.components.controllers import ResourceController, overload_docstring
-from biodm.utils.security import admin_required, login_required
+from biodm.components.controllers import ResourceController
+from biodm.utils.security import admin_required
 
 
 class ProjectController(ResourceController):
-    # @admin_required
-    @overload_docstring
-    async def create(**kwargs):
-        """
-
-        ---
-
-        description: Create Project from request body.
-        requestBody:
-            description: payload.
-            required: true
-            content:
-                application/json:
-                    schema: ProjectSchema
-        responses:
-            201:
-                description: Project Created
-                examples: |
-                    {"name": "pr_test_xyz"}
-                content:
-                    application/json:
-                        schema: ProjectSchema
-            204:
-                description: Empty Payload.
-        """
+    def __init__(self, app, entity = "", table = None, schema = None):
+        super().__init__(app, entity, table, schema)
+        self.create = admin_required(self.create)
+        self.update = admin_required(self.update)
+        self.delete = admin_required(self.delete)

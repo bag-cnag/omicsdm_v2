@@ -1,17 +1,10 @@
-from typing import TYPE_CHECKING, List, Set
-
-from sqlalchemy import DateTime, CHAR, TIMESTAMP, Column, Integer, ForeignKey, Boolean, String, ForeignKeyConstraint, SmallInteger, text
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy import TIMESTAMP, Column, Integer, String
+from sqlalchemy.orm import relationship
 
 from biodm import config
 from biodm.components.table import Base
 from biodm.utils.utils import utcnow
 from biodm.utils.security import Permission
-
-
-if TYPE_CHECKING:
-    from .dataset import Dataset
-    from .visualization import Visualization
 
 
 class Project(Base):
@@ -58,7 +51,7 @@ class Project(Base):
         # - diseases = list of strings
 
     logo_url = Column(String, nullable=True) # form: ceph_path_to_logo
-    datasets: Mapped[List["Dataset"]] = relationship(back_populates="project")
+    datasets = relationship("Dataset", uselist=True, back_populates="project")
 
     # Refactored by BioDM permission system.
     # owners: kc groups which are allowed to create datasets, upload files etc.

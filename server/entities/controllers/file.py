@@ -77,20 +77,25 @@ class FileController(S3Controller):
             404:
                 description: Not Found
         """
-        vis_svc = tables.Visualization.svc
+        file_id = request.path_params.get('id')
+        file_version = request.path_params.get('version')
+
+        # If not present, the request is blocked before
+        assert file_id
+        assert file_version
 
         vis_data = {
-            'file_id': int(request.path_params.get('id')),
-            'file_version': int(request.path_params.get('version'))
+            'file_id': int(file_id),
+            'file_version': int(file_version)
         }
 
-        user_info = await UserInfo(request)
-
-        if not user_info.info:
+        if not request.user.is_authenticated:
             raise UnauthorizedError("Visualizing requires authentication.")
 
-        vis_data["user_username"] = user_info.display_name
+        vis_data["user_username"] = request.user.display_name
 
-        vis = await vis_svc.write(data=vis_data, stmt_only=False, user_info=user_info)
+        vis = await tables.Visualization.svc.write(
+            data=vis_data, stmt_only=False, user_info=request.user
+        )
 
         return PlainTextResponse(f"http://{config.K8_HOST}/{vis.name}/")

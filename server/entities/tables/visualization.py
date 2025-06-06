@@ -7,7 +7,6 @@ from biodm.components.table import Base
 
 if TYPE_CHECKING:
     from biodm.tables import User
-    # from .project import Project
     from .file import File
 
 
@@ -17,14 +16,12 @@ class Visualization(Base):
 
     # Foreign Keys
     user_username:   Mapped[str] = mapped_column(ForeignKey("USER.username"))
-    # project_id:      Mapped[int] = mapped_column(ForeignKey("PROJECT.id"))
 
     file_id      = Column(Integer, nullable=False)
     file_version = Column(Integer, nullable=False)
 
     # Relationships
-    user:    Mapped["User"]       = relationship(foreign_keys=[user_username])
-    # project: Mapped["Project"]    = relationship(back_populates="visualizations", lazy="select")
+    user:    Mapped["User"] = relationship(foreign_keys=[user_username])
     file:    Mapped["File"] = relationship(foreign_keys=[file_id, file_version])
 
     __table_args__ = (

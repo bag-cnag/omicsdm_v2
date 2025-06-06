@@ -75,7 +75,6 @@ class Dataset(Versioned, Base):
     # Foreign keys
     project_id:         Mapped[int] = mapped_column(ForeignKey("PROJECT.id"),    nullable=False)
     submitter_username: Mapped[str] = mapped_column(ForeignKey("USER.username"), nullable=False)
-    # contact_username:   Mapped[str] = mapped_column(ForeignKey("USER.username"), nullable=False)s
     contact_email:   Mapped[str] = mapped_column(String, nullable=False) # TODO # form: contact
 
     # relationships
@@ -86,8 +85,6 @@ class Dataset(Versioned, Base):
         cascade="save-update, merge, expunge, refresh-expire",
     )
     files:    Mapped[List["File"]]   = relationship(back_populates="dataset", cascade="all,delete")
-    # files:    Mapped[List["File"]]   = relationship(back_populates="datasets", secondary=asso_dataset_file, uselist=True, cascade="all,delete")
-    # collection: Mapped["FileCollection"] = relationship(back_populates="dataset")
 
     __table_args__ = (
         UniqueConstraint(
@@ -111,21 +108,4 @@ class Dataset(Versioned, Base):
     __permissions__ = (
         Permission("self", read=True, download=True, propagates_to=['files']),
         Permission("files", write=True)
-        # Permission("self", read=True, download=True, propagates_to=['collection']),
-        # Permission("collection", write=True)
     )
-
-
-# from sqlalchemy import inspect, func, select
-# from sqlalchemy.orm import aliased, column_property
-
-
-# aDS = aliased(Dataset)
-# inspect(Dataset).add_property(
-#     'is_latest',
-#     column_property(
-#         Dataset.version == (
-#             select(func.max(aDS.version)).where(aDS.id == Dataset.id).group_by(aDS.id)
-#         ).scalar_subquery()
-#     )
-# )
